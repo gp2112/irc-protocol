@@ -2,7 +2,8 @@
 *.d
 
 # ignore binary with no extension
-!*.*
+server
+client
 
 # Object files
 *.o
