@@ -43,33 +43,73 @@ int serve(struct sockaddr_in *address, char *ip, int port) {
 
     listen(sockfd, 10);
 
-    //printf("Listening...\n");
-
-    
-    /*while (1) {
-        rcv_size = recv(new_fd, buffer, BUFF_SIZE, 0);
-        if (rcv_size==0)
-            break;
-        if (rcv_size < 0) {
-            //printf("Error when receiving: %s\n", strerror(errno));
-            break;
-        }
-
-        free(buffer);
-
-        send(new_fd, buffer, strlen(buffer)+1, 0);
-
-        printf("\rme - %s\n\n", buffer);
-        printf("send: ");
-    }*/
-    
-
     return sockfd;
 }
 
 void writeMsg(char *msg, char *usr, int *y) {
     mvprintw((*y)++, 0, "%s: %s", usr, msg);
     refresh();
+}
+
+void eraseChars(int y0, int y, int x0, int x) {
+    int bef_x, bef_y;
+    getyx(stdscr, bef_y, bef_x);
+    for (int i=y0; i<=y; i++)
+        for (int j=x0; j<=x; j++)
+            mvprintw(i, j, " ");
+    refresh();
+    move(bef_y, bef_x);
+}
+
+typedef struct _queue {
+    QUEUE *next;
+    char msg[BUFF_SIZE];
+} QUEUE;
+
+QUEUE *queue_create(char *msg) {
+
+    QUEUE *q = (QUEUE*) malloc(sizeof(QUEUE)), *tmp=q;
+    strncpy(q2->msg, msg, BUFF_SIZE);
+
+    return q;
+}
+
+void queue_insert(QUEUE *q, char *msg) {
+    QUEUE *q2 = queue_create(msg); 
+    while (tmp->next != NULL) tmp=tmp->next;
+    tmp->next = q2;
+}
+
+char *queue_pop(QUEUE **q) {
+    char *msg = (*q)->val;
+    QUEUE *head = (*q)->next;
+    free(*q);
+    *q = head;
+}
+
+void listenMsgs(void *args) {
+    // definir msg_queue
+    //
+    while (1) {
+        rcv_size = recv(new_fd, buffer, BUFF_SIZE, 0);
+        if (rcv_size==0)
+            continue;
+        if (rcv_size < 0) {
+            //printf("Error when receiving: %s\n", strerror(errno));
+            break;
+        }
+       
+        queue_insert(msg_queue, buffer);
+
+        //writeMsg(buffer, "127.0.0.1:9340", &msg_pos);
+
+        move(y-2, 10);
+
+        send(new_fd, "received!", 8, 0);
+
+    }
+
+
 }
 
 int main() {
@@ -83,7 +123,6 @@ int main() {
     int sin_size = sizeof(struct sockaddr);
 
     getmaxyx(stdscr, y, x);
-    printw("%d", y);
 
     char cmd = 0;
 
@@ -111,6 +150,8 @@ int main() {
         //cmd = getch();
 
         
+        
+
         rcv_size = recv(new_fd, buffer, BUFF_SIZE, 0);
         if (rcv_size==0)
             continue;
@@ -123,10 +164,8 @@ int main() {
 
         move(y-2, 10);
         getnstr(buffer, BUFF_SIZE);
-        move(y-2, 10);
-        for (int i=10; i<x; i++) printw(" ");
-        move(y-2, 10);
-
+        eraseChars(y-2, y-2, 10, x);
+       
         send(new_fd, buffer, strlen(buffer)+1, 0);
 
         writeMsg(buffer, "Me", &msg_pos);
