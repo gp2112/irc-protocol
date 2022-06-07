@@ -6,88 +6,6 @@
 #include <ctype.h>
 #include "irc.h"
 
-struct buff_ {
-    char *content;
-    int cursor;
-    int length;
-    int capacity;
-    char end;
-};
-
-BUFFER *buffer_create(int cap) {
-    BUFFER *buffer = (BUFFER *)malloc(sizeof(BUFFER));
-    if (buffer==NULL) return NULL;
-    buffer->content = (char*)malloc((cap+1)*sizeof(char));
-    buffer->cursor = 0;
-    buffer->length = 0;
-    buffer->end = 0;
-    buffer->capacity = cap;
-    return buffer;
-}
-
-void buffer_start(BUFFER *b) {
-    b->end = 0;
-}
-
-// removes element at cursor position
-void buffer_del(BUFFER *b) {
-    for (int i=b->cursor; i<b->length-1; i++)
-        b->content[b->cursor] = b->content[b->cursor+1];
-}
-char buffer_ended(BUFFER *b) {
-    return b->end;
-}
-char *buffer_content(BUFFER *b) {
-    return b->content;
-}
-
-void buffer_insert(BUFFER *b, char c) {
-    mvprintw(9,9,"%c", c);
-    if (b->length == b->capacity)
-        return ;
-    mvprintw(9,9,"%c", c);
-    b->content[b->cursor++] = c;
-    b->length++;
-}
-
-void buffer_mv(BUFFER *b, int i) {
-    if (b->cursor == 0 || b->cursor==b->length)
-        return ;
-    b->cursor += i;
-}
-
-void buffer_delete(BUFFER **buffer) {
-    free((*buffer)->content);
-    free(*buffer);
-    *buffer = NULL;
-}
-
-void buffer_end(BUFFER *b) {
-    b->content[b->length] = '\0';
-    b->end = 1;
-}
-
-int buffer_len(BUFFER *b) {
-    return b->length;
-}
-
-void buffer_clear(BUFFER *b) {
-    b->length=0;
-    b->cursor=0;
-}
-
-void buffer_print(BUFFER *b, int y, int x) {
-    int x0, y0;
-    getyx(stdscr, y0, x0);
-    
-    for (int i=0; i<b->length; i++)
-        mvprintw(y, x++, "%c", b->content[i]);
-    move(y0, x0);
-    refresh();
-}
-
-
-
 int serve(struct sockaddr_in *address, char *ip, int port) {
     
     address->sin_family = AF_INET;
@@ -163,10 +81,8 @@ void read_input(BUFFER *buffer, int n) {
     buffer_start(buffer);
     do {
         c = getch();
-        getch();
         if(!(c & KEY_CODE_YES) && isprint(c)) {
-            buffer_insert(buffer, (char) c);
-            printw("%c", buffer->content[buffer->length-1]);
+            buffer_insert(buffer, c);
             continue;
         }
         //mvprintw(9, 9, "%c", c);
@@ -181,10 +97,10 @@ void read_input(BUFFER *buffer, int n) {
                 buffer_mv(buffer, 1);
                 break;
             case KEY_HOME:
-                buffer->cursor = 0;
+                buffer_setcursor(buffer, 0);
                 break;
             case KEY_END:
-                buffer->cursor = buffer->length;
+                buffer_setcursor(buffer, -1);
                 break;
             case '\t':
                 buffer_insert(buffer, '\t');
@@ -216,15 +132,13 @@ void *sendMsg(void *args) {
     MSG *msg;
     while (1) {
         
-        buffer = (BUFFER*)malloc(BUFF_SIZE);
-        
         read_input(buffer, BUFF_SIZE);
 
-        msg = msg_create(buffer->content, "Me");
+        msg = msg_create(buffer_content(buffer), "Me");
         queue_insert(msg_rcvd, msg);
 
-        send(new_fd, buffer->content, buffer_len(buffer), 0);
-
+        send(new_fd, buffer_content(buffer), buffer_len(buffer), 0);
+        buffer_clear(buffer);
     }
 
     return NULL;

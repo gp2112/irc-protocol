@@ -114,21 +114,21 @@ int main(int argc, char *argv[]) {
 
     do {
         getmaxyx(stdscr, y, x);
-
+        eraseChars(0, y, 0, x);
         /*while (!queue_empty(msg_rcvd)) {
             msg = queue_pop(msg_rcvd);
             writeMsg(msg->content, msg->peer_id, &msg_pos);
         } */
-         
-        //printBar(y-3, 0, x);
-        //printBar(y-1, 0, x);
-        //mvprintw(y-2, 0, "Message: ");
+        mvprintw(3, 30, "%d %d", x, y); 
+        printBar(y-3, 0, x);
+        printBar(y-1, 0, x);
+        mvprintw(y-2, 0, "Message: ");
 
         buffer_print(buffer, y-2, 10);
-        printw(buffer_content(buffer));
-        //if (buffer_ended(buffer)) 
-        //    eraseChars(y-2, y-2, 10, x);
-        //refresh();
+        if (buffer_ended(buffer)) 
+            eraseChars(y-2, y-2, 10, x);
+        sleep(0.1);
+        refresh();
         
     } while (strcmp("ha", "/exit") != 0);
 
