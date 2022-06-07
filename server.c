@@ -15,6 +15,19 @@
 
 
 
+void eraseChars(int y0, int y, int x0, int x) {
+    for (int i=y0; i<=y; i++)
+        for (int j=x0; j<=x; j++)
+            mvprintw(i, j, " ");
+}
+
+void printBar(int y, int min_x, int max_x) {
+    move(y, min_x);
+    for (int x=min_x; x<max_x; x++) {
+        mvprintw(y, x, "=");
+    }
+}
+
 
 void writeMsg(char *msg, char *usr, int *y) {
     int y0, x0;
@@ -51,9 +64,6 @@ int main() {
 
     char cmd = 0;
 
-    char buffer[BUFF_SIZE];
-    
-    
     struct sockaddr_in address;
     int sin_size = sizeof(struct sockaddr);
 
@@ -69,16 +79,21 @@ int main() {
     writeMsg("127.0.0.1 connect to this room!", "system", &msg_pos);
 
     QUEUE *msg_rcvd = queue_create(),
-          *msg_sent = queue_create(); 
+          *msg_sent = queue_create();
+
     pthread_t t1, t2;
 
     int mutex = 0;
 
     struct listen_args largs;
+
+    BUFFER *buffer = buffer_create(BUFF_SIZE);
+
     largs.msg_rcvd = msg_rcvd;
     largs.msg_sent = msg_sent;
     largs.new_fd = new_fd;
     largs.mutex = &mutex;
+    largs.buffer = buffer;
 
     pthread_create(&t1, NULL, listenMsgs, (void *)&largs);
     pthread_create(&t2, NULL, sendMsg, (void *)&largs);
@@ -89,18 +104,22 @@ int main() {
     do {
 
         while (!queue_empty(msg_rcvd)) {
-            while (mutex);
-            mutex = 1;
             msg = queue_pop(msg_rcvd);
             writeMsg(msg->content, msg->peer_id, &msg_pos);
-            mutex = 0;
         } 
          
         
+        printBar(y-3, 0, x);
+        printBar(y-1, 0, x);
+        mvprintw(y-2, 0, "Message: ");
+        buffer_print(buffer, y-2, 10);
+
+        if (buffer_ended(buffer))
+            eraseChars(y-2, y-2, 10, x);
         refresh();
 
 
-    } while (strcmp(buffer, "/exit") != 0);
+    } while (strcmp("ha", "/exit") != 0);
 
     endwin();
     queue_delete(&msg_rcvd);

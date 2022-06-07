@@ -33,6 +33,18 @@ void writeMsg(char *msg, char *usr, int *y) {
 }
 
 
+void eraseChars(int y0, int y, int x0, int x) {
+    for (int i=y0; i<=y; i++)
+        for (int j=x0; j<=x; j++)
+            mvprintw(i, j, " ");
+}
+
+void printBar(int y, int min_x, int max_x) {
+    move(y, min_x);
+    for (int x=min_x; x<max_x; x++) {
+        mvprintw(y, x, "=");
+    }
+}
 int connectServer(struct sockaddr_in *address, int sockfd, char *ip, int port) {
 
     
@@ -59,6 +71,11 @@ int main(int argc, char *argv[]) {
     initscr();
     cbreak();
     keypad(stdscr, TRUE);
+    noecho();
+    curs_set(0);
+    intrflush(stdscr, 0);
+    leaveok(stdscr, 1);
+
     int x, y, msg_pos=0, rcv_size;
 
     struct sockaddr_in address;
@@ -66,13 +83,9 @@ int main(int argc, char *argv[]) {
 
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
-    getmaxyx(stdscr, y, x);
-
+    
     char cmd = 0;
 
-    char buffer[BUFF_SIZE];
-
-        
     int server_fd = connectServer(&address, sockfd, argv[1], PORT);
 
     char *nbuffer;
@@ -85,12 +98,14 @@ int main(int argc, char *argv[]) {
 
     int mutex = 0;
 
+    BUFFER *buffer = buffer_create(BUFF_SIZE);
     struct listen_args largs;
     largs.msg_rcvd = msg_rcvd;
     largs.msg_sent = msg_sent;
     largs.new_fd = sockfd;
     largs.mutex = &mutex;
-
+    largs.buffer = buffer;
+    
     pthread_create(&t1, NULL, listenMsgs, (void *)&largs);
     pthread_create(&t2, NULL, sendMsg, (void *)&largs);
 
@@ -98,20 +113,24 @@ int main(int argc, char *argv[]) {
     MSG *msg;
 
     do {
+        getmaxyx(stdscr, y, x);
 
-        while (!queue_empty(msg_rcvd)) {
-            while (mutex);
-            mutex = 1;
+        /*while (!queue_empty(msg_rcvd)) {
             msg = queue_pop(msg_rcvd);
             writeMsg(msg->content, msg->peer_id, &msg_pos);
-            mutex = 0;
-        } 
-        
-        
-        refresh();
+        } */
+         
+        //printBar(y-3, 0, x);
+        //printBar(y-1, 0, x);
+        //mvprintw(y-2, 0, "Message: ");
 
-
-    } while (strcmp(buffer, "/exit") != 0);
+        buffer_print(buffer, y-2, 10);
+        printw(buffer_content(buffer));
+        //if (buffer_ended(buffer)) 
+        //    eraseChars(y-2, y-2, 10, x);
+        //refresh();
+        
+    } while (strcmp("ha", "/exit") != 0);
 
     endwin();
     queue_delete(&msg_rcvd);

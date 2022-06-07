@@ -3,16 +3,90 @@
 #include <pthread.h>
 #include <errno.h>
 #include <ncurses.h>
+#include <ctype.h>
 #include "irc.h"
 
-typedef struct buff_ {
-    char content[BUFF_SIZE];
+struct buff_ {
+    char *content;
     int cursor;
-    int size;
+    int length;
+    int capacity;
+    char end;
+};
 
-} BUFFER;
+BUFFER *buffer_create(int cap) {
+    BUFFER *buffer = (BUFFER *)malloc(sizeof(BUFFER));
+    if (buffer==NULL) return NULL;
+    buffer->content = (char*)malloc((cap+1)*sizeof(char));
+    buffer->cursor = 0;
+    buffer->length = 0;
+    buffer->end = 0;
+    buffer->capacity = cap;
+    return buffer;
+}
 
-BUFFER *create_buffer()
+void buffer_start(BUFFER *b) {
+    b->end = 0;
+}
+
+// removes element at cursor position
+void buffer_del(BUFFER *b) {
+    for (int i=b->cursor; i<b->length-1; i++)
+        b->content[b->cursor] = b->content[b->cursor+1];
+}
+char buffer_ended(BUFFER *b) {
+    return b->end;
+}
+char *buffer_content(BUFFER *b) {
+    return b->content;
+}
+
+void buffer_insert(BUFFER *b, char c) {
+    mvprintw(9,9,"%c", c);
+    if (b->length == b->capacity)
+        return ;
+    mvprintw(9,9,"%c", c);
+    b->content[b->cursor++] = c;
+    b->length++;
+}
+
+void buffer_mv(BUFFER *b, int i) {
+    if (b->cursor == 0 || b->cursor==b->length)
+        return ;
+    b->cursor += i;
+}
+
+void buffer_delete(BUFFER **buffer) {
+    free((*buffer)->content);
+    free(*buffer);
+    *buffer = NULL;
+}
+
+void buffer_end(BUFFER *b) {
+    b->content[b->length] = '\0';
+    b->end = 1;
+}
+
+int buffer_len(BUFFER *b) {
+    return b->length;
+}
+
+void buffer_clear(BUFFER *b) {
+    b->length=0;
+    b->cursor=0;
+}
+
+void buffer_print(BUFFER *b, int y, int x) {
+    int x0, y0;
+    getyx(stdscr, y0, x0);
+    
+    for (int i=0; i<b->length; i++)
+        mvprintw(y, x++, "%c", b->content[i]);
+    move(y0, x0);
+    refresh();
+}
+
+
 
 int serve(struct sockaddr_in *address, char *ip, int port) {
     
@@ -82,59 +156,50 @@ void *listenMsgs(void *args) {
 }
 
 
-void eraseChars(int y0, int y, int x0, int x) {
-    for (int i=y0; i<=y; i++)
-        for (int j=x0; j<=x; j++)
-            mvprintw(i, j, " ");
-}
 
-void printBar(int y, int min_x, int max_x) {
-    move(y, min_x);
-    for (int x=min_x; x<max_x; x++) {
-        mvprintw(y, x, "=");
-    }
-}
-
-void read_input(char *buffer, int x, int y, int n) {
-    int x0, y0, i=0;
-    getyx(stdscr, y0, x0);
-    char c;
+void read_input(BUFFER *buffer, int n) {
+    int c;
+    int i=0;
+    buffer_start(buffer);
     do {
         c = getch();
-
+        getch();
+        if(!(c & KEY_CODE_YES) && isprint(c)) {
+            buffer_insert(buffer, (char) c);
+            printw("%c", buffer->content[buffer->length-1]);
+            continue;
+        }
+        //mvprintw(9, 9, "%c", c);
         switch (c) {
-
         
 
-            case KEY_BACKSPACE:
-                x -= 2;
-                mvprintw(y, x, " |");
-                break
-            case ERR: /* no key pressed */ break;
-            case KEY_LEFT:  if(buf->cursor > 0)           { buf->cursor --; } break;
-            case KEY_RIGHT: if(buf->cursor < buf->length) { buf->cursor ++; } break;
-            case KEY_HOME:  buf->cursor = 0;           break;
-            case KEY_END:   buf->cursor = buf->length; break;
+            case ERR: break;
+            case KEY_LEFT:  
+                buffer_mv(buffer, -1);
+                break;
+            case KEY_RIGHT: 
+                buffer_mv(buffer, 1);
+                break;
+            case KEY_HOME:
+                buffer->cursor = 0;
+                break;
+            case KEY_END:
+                buffer->cursor = buffer->length;
+                break;
             case '\t':
-                add_char(buf, '\t');
+                buffer_insert(buffer, '\t');
                 break;
             case KEY_BACKSPACE:
             case 127:
             case 8:
-                if(buf->cursor <= 0) {
-                    break;
-                }
-                buf->cursor --;
+                buffer_mv(buffer, -1);
+                buffer_del(buffer);
                 // Fall-through
-                       
-            default:
-                buffer[i] = c;
-                mvprintw(y, x++, "%c|");
-
+                break;
             
         }
     } while (i<n && c != '\n');
-
+    buffer_end(buffer);
 }
 
 void *sendMsg(void *args) {
@@ -143,40 +208,23 @@ void *sendMsg(void *args) {
     int new_fd = largs->new_fd;
     QUEUE *msg_rcvd = largs->msg_rcvd,
           *msg_sent = largs->msg_sent;
+    
+    BUFFER *buffer = largs->buffer;
 
     int *mutex = largs->mutex;
 
-    char *buffer, temp[BUFF_SIZE];
-    int x, y, x0, y0;
-
-    getmaxyx(stdscr, y, x);
-
     MSG *msg;
-
     while (1) {
-        printBar(y-3, 0, x);
-        printBar(y-1, 0, x);
-        mvprintw(y-2, 0, "Message: ");
+        
+        buffer = (BUFFER*)malloc(BUFF_SIZE);
+        
+        read_input(buffer, BUFF_SIZE);
 
-        buffer = (char*)malloc(BUFF_SIZE);
-        
-        
-        move(y-2, 10);
-        getnstr(buffer, BUFF_SIZE);
-        
-        while (*mutex);
-        getyx(stdscr, y0, x0);
-        *mutex = 1;
-        eraseChars(y-2, y-2, 10, x);
-        move(y0, x0);
-        *mutex = 0;
-        
-        msg = msg_create(buffer, "Me");
-
-        send(new_fd, buffer, strlen(buffer)+1, 0);
-
+        msg = msg_create(buffer->content, "Me");
         queue_insert(msg_rcvd, msg);
-        *mutex = 0;
+
+        send(new_fd, buffer->content, buffer_len(buffer), 0);
+
     }
 
     return NULL;
