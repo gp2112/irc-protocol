@@ -13,7 +13,8 @@
 #define LOCALHOST "127.0.0.1"
 
 struct listen_args {
-    QUEUE *msg_queue;
+    QUEUE *msg_rcvd;
+    QUEUE *msg_sent;
     int new_fd;
     int *mutex;
 };

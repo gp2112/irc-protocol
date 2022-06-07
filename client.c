@@ -14,12 +14,22 @@
 
 
 
+
 void writeMsg(char *msg, char *usr, int *y) {
     int y0, x0;
     getyx(stdscr, y0, x0);
-    mvprintw((*y)++, 0, "%s: %s", usr, msg);
+    int x = 0;
+    while (*usr!='\0') {
+        mvprintw(*y, x++, "%c", *usr);
+        usr++;
+    }
+    mvprintw(*y, x++, ": ");
+    while (*msg != '\0') {
+        mvprintw(*y, ++x, "%c", *msg);
+        msg++;
+    }
+    *y += 1;
     move(y0, x0);
-    refresh();
 }
 
 
@@ -69,13 +79,15 @@ int main(int argc, char *argv[]) {
     
     int addrlen = sizeof(struct sockaddr);
 
-    QUEUE *msg_queue = queue_create();
+    QUEUE *msg_rcvd = queue_create(),
+          *msg_sent = queue_create();
     pthread_t t1, t2;
 
     int mutex = 0;
 
     struct listen_args largs;
-    largs.msg_queue = msg_queue;
+    largs.msg_rcvd = msg_rcvd;
+    largs.msg_sent = msg_sent;
     largs.new_fd = sockfd;
     largs.mutex = &mutex;
 
@@ -87,9 +99,12 @@ int main(int argc, char *argv[]) {
 
     do {
 
-        while (!queue_empty(msg_queue)) {
-            msg = queue_pop(msg_queue);
+        while (!queue_empty(msg_rcvd)) {
+            while (mutex);
+            mutex = 1;
+            msg = queue_pop(msg_rcvd);
             writeMsg(msg->content, msg->peer_id, &msg_pos);
+            mutex = 0;
         } 
         
         
@@ -99,7 +114,8 @@ int main(int argc, char *argv[]) {
     } while (strcmp(buffer, "/exit") != 0);
 
     endwin();
-    queue_delete(&msg_queue);
+    queue_delete(&msg_rcvd);
+    queue_delete(&msg_sent);
     close(sockfd);
 
     return 0;
