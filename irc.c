@@ -5,6 +5,29 @@
 #include <ncurses.h>
 #include <ctype.h>
 #include "irc.h"
+#include "interface.h"
+
+int connectServer(struct sockaddr_in *address, int sockfd, char *ip, int port) {
+
+    
+    struct sockaddr_in serv_addr;
+    
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(port);
+
+    inet_pton(AF_INET, ip, &serv_addr.sin_addr);
+
+    int server_fd = connect(sockfd, (struct sockaddr*)&serv_addr, 
+                                        sizeof(serv_addr));
+
+    if (server_fd < 0) {
+        fprintf(stderr, strerror(errno));
+        return -1;
+    } 
+
+    return server_fd;
+}
+
 
 int serve(struct sockaddr_in *address, char *ip, int port) {
     
@@ -48,16 +71,15 @@ void *listenMsgs(void *args) {
     char *buffer;
 
     MSG *msg;
-    while (!*largs->kill) {
+    while (1) {
         msg = (MSG *)malloc(sizeof(MSG));
 
         buffer = (char*)malloc(BUFF_SIZE);
-
         rcv_size = recv(new_fd, buffer, BUFF_SIZE, 0);
         if (rcv_size==0)
-            continue;
+            break;
         if (rcv_size < 0) {
-            //printf("Error when receiving: %s\n", strerror(errno));
+            printw("Error when receiving: %s\n", strerror(errno));
             break;
         }
         if (strcmp(buffer, "received!")==0)
@@ -75,61 +97,16 @@ void *listenMsgs(void *args) {
 
 
 
-int read_input(BUFFER *buffer, int n) {
-    int c;
-    int i=0;
-    buffer_start(buffer);
-    do {
-        c = getch();
-        if(!(c & KEY_CODE_YES) && isprint(c)) {
-            buffer_insert(buffer, c);
-            continue;
-        }
-        //mvprintw(9, 9, "%c", c);
-        switch (c) {
-        
-
-            case ERR: break;
-            case KEY_LEFT:  
-                buffer_mv(buffer, -1);
-                break;
-            case KEY_RIGHT: 
-                buffer_mv(buffer, 1);
-                break;
-            case KEY_HOME:
-                buffer_setcursor(buffer, 0);
-                break;
-            case KEY_END:
-                buffer_setcursor(buffer, -1);
-                break;
-            case 27:
-                return 1;
-            case '\t':
-                buffer_insert(buffer, '\t');
-                break;
-            case KEY_BACKSPACE:
-            case 127:
-            case 8:
-                buffer_del(buffer);
-                // Fall-through
-                break;
-            
-        }
-    } while (i<n && c != '\n');
-    buffer_end(buffer);
-    return 0;
-}
 
 void *sendMsg(void *args) {
     struct listen_args *largs = (struct listen_args*)args;
 
     int new_fd = largs->new_fd;
-    QUEUE *msg_rcvd = largs->msg_rcvd,
-          *msg_sent = largs->msg_sent;
+    QUEUE *msg_rcvd = largs->msg_rcvd;
     
     BUFFER *buffer = largs->buffer;
 
-    int *mutex = largs->mutex;
+    int *mutex = largs->mutex, r;;
 
     MSG *msg;
     while (1) {
@@ -140,7 +117,11 @@ void *sendMsg(void *args) {
         msg = msg_create(buffer_content(buffer), "Me");
         queue_insert(msg_rcvd, msg);
 
-        send(new_fd, buffer_content(buffer), buffer_len(buffer), 0);
+        r = send(new_fd, buffer_content(buffer), buffer_len(buffer), 0);
+        //mvprintw(4,4,"%s", strerror(errno));
+        if (r < 0)
+            break;
+
         buffer_clear(buffer);
     }
 

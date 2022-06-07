@@ -1,6 +1,6 @@
 
 CC = gcc
-DEPS = queue.c irc.c buffer.c
+DEPS = queue.c irc.c buffer.c interface.c
 FLAGS = -g
 LIBS = -lncurses -lpthread
 
