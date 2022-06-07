@@ -6,49 +6,22 @@
 #include <unistd.h>
 #include <errno.h>
 #include <ncurses.h>
+#include <pthread.h>
 
-#define PORT 9802
-
-#define BUFF_SIZE 128
+#include "irc.h"
 
 #define max(a,b)(a>b ? a : b)
 
 
-char *readline() {
-    int i = 0;
-    char c;
-
-    char *buffer = (char*)malloc(BUFF_SIZE*sizeof(char));
-
-    while ((c=getchar()) == '\n');
-
-    do {
-
-        buffer[i++] = c;
-
-        if (i%(BUFF_SIZE+1)==0)
-            buffer = realloc(buffer, (BUFF_SIZE * (int)(1+ i/BUFF_SIZE))*sizeof(char));
-
-    } while ((c=getchar()) != '\n' && c != EOF );
-
-
-    buffer[i] = '\0';
-
-    return buffer;
-}
-
-void printBar(int y, int min_x, int max_x) {
-    move(y, min_x);
-    for (int x=min_x; x<max_x; x++) {
-        printw("=");
-    }
-    printw("\n");
-}
 
 void writeMsg(char *msg, char *usr, int *y) {
+    int y0, x0;
+    getyx(stdscr, y0, x0);
     mvprintw((*y)++, 0, "%s: %s", usr, msg);
+    move(y0, x0);
     refresh();
 }
+
 
 int connectServer(struct sockaddr_in *address, int sockfd, char *ip, int port) {
 
@@ -71,7 +44,7 @@ int connectServer(struct sockaddr_in *address, int sockfd, char *ip, int port) {
     return server_fd;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
 
     initscr();
     cbreak();
@@ -89,51 +62,44 @@ int main() {
 
     char buffer[BUFF_SIZE];
 
-    printBar(y-3, 0, x);
-    printBar(y-1, 0, x);
-    mvprintw(y-2, 0, "Message: ");
-
-    
-    int server_fd = connectServer(&address, sockfd, "127.0.0.1", PORT);
+        
+    int server_fd = connectServer(&address, sockfd, argv[1], PORT);
 
     char *nbuffer;
     
     int addrlen = sizeof(struct sockaddr);
 
+    QUEUE *msg_queue = queue_create();
+    pthread_t t1, t2;
+
+    int mutex = 0;
+
+    struct listen_args largs;
+    largs.msg_queue = msg_queue;
+    largs.new_fd = sockfd;
+    largs.mutex = &mutex;
+
+    pthread_create(&t1, NULL, listenMsgs, (void *)&largs);
+    pthread_create(&t2, NULL, sendMsg, (void *)&largs);
+
     int n, i;
+    MSG *msg;
+
     do {
-        //mvprintw(0, 0, "Hello world! Pressione alguma tecla (q para sair)!\n");
 
-        //cmd = getch();
-
-        move(y-2, 10);
-        getnstr(buffer, BUFF_SIZE);
-        move(y-2, 10);
-        for (int i=10; i<x; i++) printw(" ");
-        move(y-2, 10);
+        while (!queue_empty(msg_queue)) {
+            msg = queue_pop(msg_queue);
+            writeMsg(msg->content, msg->peer_id, &msg_pos);
+        } 
         
-        send(sockfd, buffer, strlen(buffer)+1, 0);
-        writeMsg(buffer, "Me", &msg_pos);
-
-        rcv_size = recv(sockfd, buffer, BUFF_SIZE, 0);
-        if (rcv_size==0)
-            continue;
-        if (rcv_size < 0) {
-            printf("Error when receiving: %s\n", strerror(errno));
-            break;
-        }
         
-        writeMsg(buffer, "127.0.0.1:9032", &msg_pos);
-
-
         refresh();
 
 
-    } while (strcmp(buffer, "/exit") != 0); 
-
-    getch();
+    } while (strcmp(buffer, "/exit") != 0);
 
     endwin();
+    queue_delete(&msg_queue);
     close(sockfd);
 
     return 0;

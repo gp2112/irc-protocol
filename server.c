@@ -11,106 +11,20 @@
 #include <assert.h>
 #include <arpa/inet.h>
 
-#define PORT 9802
-#define BUFF_SIZE 4098
-#define LOCALHOST "127.0.0.1"
+#include "irc.h"
 
 
 
-void printBar(int y, int min_x, int max_x) {
-    move(y, min_x);
-    for (int x=min_x; x<max_x; x++) {
-        printw("=");
-    }
-    printw("\n");
-}
-
-int serve(struct sockaddr_in *address, char *ip, int port) {
-    
-    address->sin_family = AF_INET;
-    address->sin_port = htons(port);
-    address->sin_addr.s_addr = INADDR_ANY;
-
-    int r, sockfd = socket(PF_INET, SOCK_STREAM, 0),
-           sin_size = sizeof(struct sockaddr);
-
-    r = bind(sockfd, (struct sockaddr*)(address), sin_size);
-
-    if (r < 0) {
-        fprintf(stderr, strerror(errno));
-        exit(1);
-    }
-
-    listen(sockfd, 10);
-
-    return sockfd;
-}
 
 void writeMsg(char *msg, char *usr, int *y) {
+    int y0, x0;
+    getyx(stdscr, y0, x0);
     mvprintw((*y)++, 0, "%s: %s", usr, msg);
-    refresh();
+    move(y0, x0);
 }
 
-void eraseChars(int y0, int y, int x0, int x) {
-    int bef_x, bef_y;
-    getyx(stdscr, bef_y, bef_x);
-    for (int i=y0; i<=y; i++)
-        for (int j=x0; j<=x; j++)
-            mvprintw(i, j, " ");
-    refresh();
-    move(bef_y, bef_x);
-}
-
-typedef struct _queue {
-    QUEUE *next;
-    char msg[BUFF_SIZE];
-} QUEUE;
-
-QUEUE *queue_create(char *msg) {
-
-    QUEUE *q = (QUEUE*) malloc(sizeof(QUEUE)), *tmp=q;
-    strncpy(q2->msg, msg, BUFF_SIZE);
-
-    return q;
-}
-
-void queue_insert(QUEUE *q, char *msg) {
-    QUEUE *q2 = queue_create(msg); 
-    while (tmp->next != NULL) tmp=tmp->next;
-    tmp->next = q2;
-}
-
-char *queue_pop(QUEUE **q) {
-    char *msg = (*q)->val;
-    QUEUE *head = (*q)->next;
-    free(*q);
-    *q = head;
-}
-
-void listenMsgs(void *args) {
-    // definir msg_queue
-    //
-    while (1) {
-        rcv_size = recv(new_fd, buffer, BUFF_SIZE, 0);
-        if (rcv_size==0)
-            continue;
-        if (rcv_size < 0) {
-            //printf("Error when receiving: %s\n", strerror(errno));
-            break;
-        }
-       
-        queue_insert(msg_queue, buffer);
-
-        //writeMsg(buffer, "127.0.0.1:9340", &msg_pos);
-
-        move(y-2, 10);
-
-        send(new_fd, "received!", 8, 0);
-
-    }
 
 
-}
 
 int main() {
     initscr();
@@ -119,21 +33,18 @@ int main() {
 
     int x, y, msg_pos=0, rcv_size;
 
-    struct sockaddr_in address;
-    int sin_size = sizeof(struct sockaddr);
-
+    
     getmaxyx(stdscr, y, x);
 
     char cmd = 0;
 
     char buffer[BUFF_SIZE];
-
-    printBar(y-3, 0, x);
-    printBar(y-1, 0, x);
-    mvprintw(y-2, 0, "Message: ");
-
     
-    int sockfd = serve(&address, "127.0.0.1", PORT);
+    
+    struct sockaddr_in address;
+    int sin_size = sizeof(struct sockaddr);
+
+    int sockfd = serve(&address, LOCALHOST, PORT);
     writeMsg("Waiting peer to connect...", "system", &msg_pos);
 
     int new_fd = accept(sockfd, (struct sockaddr*)&address, &sin_size);
@@ -144,39 +55,37 @@ int main() {
 
     writeMsg("127.0.0.1 connect to this room!", "system", &msg_pos);
 
+    QUEUE *msg_queue = queue_create();
+    pthread_t t1, t2;
+
+    int mutex = 0;
+
+    struct listen_args largs;
+    largs.msg_queue = msg_queue;
+    largs.new_fd = new_fd;
+    largs.mutex = &mutex;
+
+    pthread_create(&t1, NULL, listenMsgs, (void *)&largs);
+    pthread_create(&t2, NULL, sendMsg, (void *)&largs);
+
+    MSG *msg;
+
+    
     do {
-        //mvprintw(0, 0, "Hello world! Pressione alguma tecla (q para sair)!\n");
 
-        //cmd = getch();
-
+        while (!queue_empty(msg_queue)) {
+            msg = queue_pop(msg_queue);
+            writeMsg(msg->content, msg->peer_id, &msg_pos);
+        } 
         
         
-
-        rcv_size = recv(new_fd, buffer, BUFF_SIZE, 0);
-        if (rcv_size==0)
-            continue;
-        if (rcv_size < 0) {
-            //printf("Error when receiving: %s\n", strerror(errno));
-            break;
-        }
-        
-        writeMsg(buffer, "127.0.0.1:9340", &msg_pos);
-
-        move(y-2, 10);
-        getnstr(buffer, BUFF_SIZE);
-        eraseChars(y-2, y-2, 10, x);
-       
-        send(new_fd, buffer, strlen(buffer)+1, 0);
-
-        writeMsg(buffer, "Me", &msg_pos);
-
         refresh();
 
 
-    } while (strcmp(buffer, "/exit") != 0); 
-    //getch();
-    endwin();
+    } while (strcmp(buffer, "/exit") != 0);
 
+    endwin();
+    queue_delete(&msg_queue);
     close(sockfd);
 
     return 0;
