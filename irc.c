@@ -48,7 +48,7 @@ void *listenMsgs(void *args) {
     char *buffer;
 
     MSG *msg;
-    while (1) {
+    while (!*largs->kill) {
         msg = (MSG *)malloc(sizeof(MSG));
 
         buffer = (char*)malloc(BUFF_SIZE);
@@ -75,7 +75,7 @@ void *listenMsgs(void *args) {
 
 
 
-void read_input(BUFFER *buffer, int n) {
+int read_input(BUFFER *buffer, int n) {
     int c;
     int i=0;
     buffer_start(buffer);
@@ -102,13 +102,14 @@ void read_input(BUFFER *buffer, int n) {
             case KEY_END:
                 buffer_setcursor(buffer, -1);
                 break;
+            case 27:
+                return 1;
             case '\t':
                 buffer_insert(buffer, '\t');
                 break;
             case KEY_BACKSPACE:
             case 127:
             case 8:
-                buffer_mv(buffer, -1);
                 buffer_del(buffer);
                 // Fall-through
                 break;
@@ -116,6 +117,7 @@ void read_input(BUFFER *buffer, int n) {
         }
     } while (i<n && c != '\n');
     buffer_end(buffer);
+    return 0;
 }
 
 void *sendMsg(void *args) {
@@ -132,8 +134,9 @@ void *sendMsg(void *args) {
     MSG *msg;
     while (1) {
         
-        read_input(buffer, BUFF_SIZE);
-
+        *largs->kill = read_input(buffer, BUFF_SIZE);
+        if (*largs->kill)
+            return NULL;
         msg = msg_create(buffer_content(buffer), "Me");
         queue_insert(msg_rcvd, msg);
 

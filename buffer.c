@@ -30,9 +30,9 @@ void buffer_del(BUFFER *b) {
     if (b->cursor == 0)
         return;
 
-    for (int i=b->cursor; i<b->length-1; i++)
+    for (int i=b->cursor; i<b->length; i++)
         b->content[i] = b->content[i+1];
-    b->content[b->length-1] = '\0';
+    //b->content[b->length-1] = '\0';
     b->cursor--;
     b->length--;
 }
@@ -45,7 +45,7 @@ char *buffer_content(BUFFER *b) {
 
 void buffer_setcursor(BUFFER *b, int i) {
     
-    i = abs(b->length + i+1);
+    i = i>=0 ? i : abs(b->length + i+1);
 
     b->cursor = i % (b->length+1);
 }
@@ -53,7 +53,10 @@ void buffer_setcursor(BUFFER *b, int i) {
 void buffer_insert(BUFFER *b, char c) {
     if (b->length == b->capacity)
         return ;
-
+    
+    for (int i=b->length; i>b->cursor; i--) {
+        b->content[i] = b->content[i-1];
+    }
     b->content[b->cursor++] = c;
     b->length++;
 }
@@ -88,8 +91,8 @@ void buffer_print(BUFFER *b, int y, int x) {
     int x0, y0;
     getyx(stdscr, y0, x0);
     
-    if (b->length == 0)
-        mvprintw(y, x, "|");
+    if (b->cursor == 0)
+        mvprintw(y, x++, "|");
 
     for (int i=0; i<b->length; i++) {
         mvprintw(y, x++, "%c", b->content[i]);

@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
           *msg_sent = queue_create();
     pthread_t t1, t2;
 
-    int mutex = 0;
+    int mutex = 0, kill=0;
 
     BUFFER *buffer = buffer_create(BUFF_SIZE);
     struct listen_args largs;
@@ -105,6 +105,7 @@ int main(int argc, char *argv[]) {
     largs.new_fd = sockfd;
     largs.mutex = &mutex;
     largs.buffer = buffer;
+    largs.kill = &kill;
     
     pthread_create(&t1, NULL, listenMsgs, (void *)&largs);
     pthread_create(&t2, NULL, sendMsg, (void *)&largs);
@@ -130,7 +131,7 @@ int main(int argc, char *argv[]) {
         sleep(0.1);
         refresh();
         
-    } while (strcmp("ha", "/exit") != 0);
+    } while (!kill);
 
     endwin();
     queue_delete(&msg_rcvd);

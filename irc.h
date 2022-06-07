@@ -19,6 +19,7 @@ struct listen_args {
     BUFFER *buffer;
     int new_fd;
     int *mutex;
+    int *kill;
 };
 
 
