@@ -12,7 +12,7 @@ Group Members
 
 This program was compiled with GCC 12.1.0 in Linux Kernel 5.18.
 
-## Compile
+## Building
 
 ```sh
 make
