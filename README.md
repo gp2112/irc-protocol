@@ -1,5 +1,7 @@
 # IRC Protocol Implementation in C
 
+
+
 This is a simples IRC client-server implementation in pure C for Computer Networks subject.
 
 Group Members
@@ -18,3 +20,13 @@ This program was compiled with GCC 12.1.0 in Linux Kernel 5.18.
 make
 ```
 (so hard, yey)
+
+## Runing a server
+
+```
+./server IP PORT
+```
+## Running a client
+```
+./client
+```
