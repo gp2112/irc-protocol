@@ -8,6 +8,10 @@ Group Members
 - [Adrio Oliveira Alves](https://github.com/adriooa) - *N. USP*
 - [Eduardo Vinicius Barbosa Rossi](https://github.com/RossiEduardo) - N. USP
 
+## Compatibility
+
+This program was tested in Linux Kernel 5.18.
+
 ## Compile
 
 ```sh
