@@ -1,7 +1,5 @@
 # IRC Protocol Implementation in C
 
-
-
 This is a simples IRC client-server implementation in pure C for Computer Networks subject.
 
 Group Members
@@ -30,3 +28,10 @@ make
 ```
 ./client
 ```
+
+#### Sending and Receiving Messages
+![image](https://user-images.githubusercontent.com/26512375/172527923-df33b7b5-d7ca-46e7-925d-af32f8841952.png)
+
+#### Connecting to some server
+![Screenshot_20220608_004722](https://user-images.githubusercontent.com/26512375/172527987-788231fe-fb18-440c-aba6-1156e68c91ff.png)
+
