@@ -10,7 +10,7 @@ Group Members
 
 ## Compatibility
 
-This program was tested in Linux Kernel 5.18.
+This program was compiled with GCC 12.1.0 in Linux Kernel 5.18.
 
 ## Compile
 
