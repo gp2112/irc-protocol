@@ -28,17 +28,17 @@ int main(int argc, char *argv[]) {
     int sin_size = sizeof(struct sockaddr);
 
     int sockfd = serve(&address, ip, port);
-    writeMsg("Waiting peer to connect...", "system", &msg_pos);
+    writeMsg("Waiting peer to connect...", "system", 0, &msg_pos);
 
     int new_fd = accept(sockfd, (struct sockaddr*)&address, &sin_size);
     if (new_fd < 0) {
         fprintf(stderr, "Error when accepting: %s\n", strerror(errno));
         exit(1);
     }
-    
+    char *peer_addr = inet_ntoa(address.sin_addr); 
     msg_pos--;
 
-    writeMsg("127.0.0.1 connect to this room!", "system", &msg_pos);
+    writeMsg("Someone connect to this room!", "system", 0, &msg_pos);
 
     QUEUE *msg_rcvd = queue_create();
 

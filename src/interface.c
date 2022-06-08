@@ -6,6 +6,8 @@
 #include "interface.h"
 #include "msg.h"
 
+#define MAINSCR 0.8
+
 void interface_init() {
 
     initscr();
@@ -14,16 +16,20 @@ void interface_init() {
     noecho();
     curs_set(0);
     intrflush(stdscr, 0);
-    leaveok(stdscr, 1);
+    //leaveok(stdscr, 1);
 }
 
-void writeMsg(char *msg, char *usr, int *y) {
-    int y0, x0;
+void writeMsg(char *msg, char *usr, int port, int *y) {
+    int y0, x0, max_y, max_x;
     getyx(stdscr, y0, x0);
-    
-    mvprintw(*y, 2, "%s - %s", usr, msg);
+    getmaxyx(stdscr, max_y, max_x);
+   
+    if (port > 0)
+        mvprintw(*y, 2, "%s:%d - %s", usr, port, msg);
+    else
+        mvprintw(*y, 2, "%s - %s", usr, msg);
 
-    *y += 1;
+    *y += 1+(int)((6+strlen(usr)+strlen(msg))/(max_x));
     move(y0, x0);
 }
 
@@ -66,6 +72,7 @@ void msg_box(BUFFER *buffer, int w, int h, char *msg, int n) {
     inter_page(y-(h>>1), y+(h>>1), x - w, x + w, 0);
 
     mvprintw(y, x-strlen(msg), msg);
+    move(y,x);
     read_input(buffer, n);
     eraseChars(y, y, x, max_x); 
     
@@ -130,7 +137,7 @@ void inter_getIpPort(BUFFER *buffer, char *ip, int *port) {
     strcpy(ip, buffer_content(buffer));
     buffer_clear(buffer);
     
-    msg_box(buffer, 15, 10, "Server ip: ", 20);
+    msg_box(buffer, 20, 10, "Server Port: ", 20);
 
     *port = atoi(buffer_content(buffer));
     buffer_clear(buffer);
@@ -145,7 +152,7 @@ void print_messages(QUEUE *msg_rcvd, BUFFER *buffer, int *kill) {
 
         while (!queue_empty(msg_rcvd)) {
             msg = queue_pop(msg_rcvd);
-            writeMsg(msg->content, msg->peer_id, &msg_pos);
+            writeMsg(msg->content, msg->peer_ip, msg->peer_port, &msg_pos);
         }
 
         printBar(y-3, 0, x);

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/socket.h>
 #include <errno.h>
 #include <ncurses.h>
 #include <ctype.h>
@@ -39,7 +40,7 @@ int serve(struct sockaddr_in *address, char *ip, int port) {
            sin_size = sizeof(struct sockaddr);
 
     r = bind(sockfd, (struct sockaddr*)(address), sin_size);
-
+    
     if (r < 0) {
         fprintf(stderr, strerror(errno));
         exit(1);
@@ -50,11 +51,12 @@ int serve(struct sockaddr_in *address, char *ip, int port) {
     return sockfd;
 }
 
-MSG *msg_create(char *content, char *peer_id) {
+MSG *msg_create(char *content, char *peer_ip, int port) {
     MSG *msg = (MSG *)malloc(sizeof(MSG));
-    msg->peer_id = (char *)malloc(20);
+    msg->peer_ip = (char *)malloc(20);
     msg->content = (char *)malloc(BUFF_SIZE);
-    strncpy(msg->peer_id, peer_id, 20);
+    msg->peer_port = port;
+    strncpy(msg->peer_ip, peer_ip, 20);
     strncpy(msg->content, content, BUFF_SIZE);
 
     return msg;
@@ -65,7 +67,9 @@ void *listenMsgs(void *args) {
     int new_fd = largs->new_fd;
     QUEUE *msg_rcvd = largs->msg_rcvd;
     int *mutex = largs->mutex;
-    
+    struct sockaddr_in address;
+    int len = sizeof(address);
+
     int rcv_size;
     
     char *buffer;
@@ -84,7 +88,8 @@ void *listenMsgs(void *args) {
         }
         if (strcmp(buffer, "received!")==0)
             continue;
-        msg = msg_create(buffer, "127.0.0.1:1233"); 
+        getpeername(new_fd, (struct sockaddr *)&address, &len);
+        msg = msg_create(buffer, inet_ntoa(address.sin_addr), ntohs(address.sin_port)); 
         queue_insert(msg_rcvd, msg);
 
         //writeMsg(buffer, "127.0.0.1:9340", &msg_pos);
@@ -114,7 +119,7 @@ void *sendMsg(void *args) {
         *largs->kill = read_input(buffer, BUFF_SIZE);
         if (*largs->kill)
             return NULL;
-        msg = msg_create(buffer_content(buffer), "Me");
+        msg = msg_create(buffer_content(buffer), "Me", 0);
         queue_insert(msg_rcvd, msg);
 
         r = send(new_fd, buffer_content(buffer), buffer_len(buffer), 0);
