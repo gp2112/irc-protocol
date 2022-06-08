@@ -5,8 +5,8 @@ This is a simples IRC client-server implementation in pure C for Computer Networ
 Group Members
 
 - [Guilherme Ramos Costa Paixão](https://guip.dev) - 11796079
-- [Adrio Oliveira Alves](https://github.com/adriooa) - *N. USP*
-- [Eduardo Vinicius Barbosa Rossi](https://github.com/RossiEduardo) - N. USP
+- [Adrio Oliveira Alves](https://github.com/adriooa) - 11796830
+- [Eduardo Vinicius Barbosa Rossi](https://github.com/RossiEduardo) - 10716887
 
 ## Compatibility
 
