@@ -35,3 +35,5 @@ make
 #### Connecting to some server
 ![Screenshot_20220608_004722](https://user-images.githubusercontent.com/26512375/172527987-788231fe-fb18-440c-aba6-1156e68c91ff.png)
 
+![image](https://user-images.githubusercontent.com/26512375/172528336-293af326-90fd-4521-9d48-e57cfa2133aa.png)
+
