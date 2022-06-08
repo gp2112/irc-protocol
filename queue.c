@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -11,7 +12,7 @@ typedef struct node_ NODE;
 
 struct node_ {
     NODE *next;
-    char msg[BUFF_SIZE];
+    MSG *msg;
 };
 
 struct queue_ {
@@ -20,14 +21,14 @@ struct queue_ {
     char empty;
 };
 
-NODE *node_create(char *msg) {
+NODE *node_create(MSG *msg) {
     NODE *node = (NODE*)malloc(sizeof(NODE));
     if (node==NULL) {
         seterr(ENOMEM);
         return NULL;
     }
     node->next = NULL;
-    strncpy(node->msg, msg, BUFF_SIZE);
+    node->msg = msg;
     return node;
 }
 
@@ -52,7 +53,7 @@ char queue_empty(QUEUE *q) {
     return q->empty;
 }
 
-char queue_insert(QUEUE *q, char *msg) {
+char queue_insert(QUEUE *q, MSG *msg) {
     if (q->empty) {
         q->head = node_create(msg);
         q->end = q->head;
@@ -60,12 +61,16 @@ char queue_insert(QUEUE *q, char *msg) {
         return 0;
     }
     
-    q->end->next = node_create(msg);
+    if (q->head == q->end) {
+        q->head->next = node_create(msg);
+    }
+    else q->end->next = node_create(msg);
+
     q->end = q->end->next;
-    return -1;
+    return 0;
 }
 
-char *queue_pop(QUEUE *q) {
+MSG *queue_pop(QUEUE *q) {
     if (q->empty) {
         seterr(EADDRNOTAVAIL);
         return NULL;
@@ -75,8 +80,11 @@ char *queue_pop(QUEUE *q) {
     
     q->head = q->head->next;
 
+    if (q->head==NULL)
+        q->empty = 1;
+    MSG *msg = n->msg;
     free(n);
-    return n->msg;
+    return msg;
 }
 
 char queue_delete(QUEUE **q) {
@@ -84,7 +92,14 @@ char queue_delete(QUEUE **q) {
         seterr(EADDRNOTAVAIL);
         return -1;
     }
-    while (queue_pop(*q) != NULL);
+    MSG *msg; 
+    while (!(*q)->empty) {
+        msg = queue_pop(*q);
+        free(msg->content);
+        free(msg);
+    }
+    
+    free(*q);
     *q = NULL;
     return 0;
 }

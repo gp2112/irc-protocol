@@ -6,137 +6,55 @@
 #include <unistd.h>
 #include <errno.h>
 #include <ncurses.h>
+#include <pthread.h>
 
-#define PORT 9802
-
-#define BUFF_SIZE 128
-
-#define max(a,b)(a>b ? a : b)
+#include "irc.h"
+#include "interface.h"
 
 
-char *readline() {
-    int i = 0;
-    char c;
 
-    char *buffer = (char*)malloc(BUFF_SIZE*sizeof(char));
+int main(int argc, char *argv[]) {
 
-    while ((c=getchar()) == '\n');
+    interface_init();
 
-    do {
+    BUFFER *buffer = buffer_create(BUFF_SIZE);
 
-        buffer[i++] = c;
+   
+    char ip[20];
+    int port;
 
-        if (i%(BUFF_SIZE+1)==0)
-            buffer = realloc(buffer, (BUFF_SIZE * (int)(1+ i/BUFF_SIZE))*sizeof(char));
-
-    } while ((c=getchar()) != '\n' && c != EOF );
-
-
-    buffer[i] = '\0';
-
-    return buffer;
-}
-
-void printBar(int y, int min_x, int max_x) {
-    move(y, min_x);
-    for (int x=min_x; x<max_x; x++) {
-        printw("=");
-    }
-    printw("\n");
-}
-
-void writeMsg(char *msg, char *usr, int *y) {
-    mvprintw((*y)++, 0, "%s: %s", usr, msg);
-    refresh();
-}
-
-int connectServer(struct sockaddr_in *address, int sockfd, char *ip, int port) {
-
-    
-    struct sockaddr_in serv_addr;
-    
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(PORT);
-
-    inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr);
-
-    int server_fd = connect(sockfd, (struct sockaddr*)&serv_addr, 
-                                        sizeof(serv_addr));
-
-    if (server_fd < 0) {
-        fprintf(stderr, strerror(errno));
-        return -1;
-    } 
-
-    return server_fd;
-}
-
-int main() {
-
-    initscr();
-    cbreak();
-    keypad(stdscr, TRUE);
-    int x, y, msg_pos=0, rcv_size;
+    inter_getIpPort(buffer, ip, &port);
 
     struct sockaddr_in address;
-    int sin_size = sizeof(struct sockaddr);
 
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    int server_fd = connectServer(&address, sockfd, ip, port);
 
-    getmaxyx(stdscr, y, x);
-
-    char cmd = 0;
-
-    char buffer[BUFF_SIZE];
-
-    printBar(y-3, 0, x);
-    printBar(y-1, 0, x);
-    mvprintw(y-2, 0, "Message: ");
-
+    if (server_fd < 0) {
+        printw(strerror(errno));
+        return 1;
+    }   
     
-    int server_fd = connectServer(&address, sockfd, "127.0.0.1", PORT);
+    int mutex = 0, kill=0;
 
-    char *nbuffer;
+    QUEUE *msg_rcvd = queue_create();
     
-    int addrlen = sizeof(struct sockaddr);
+    struct listen_args largs;
+    largs.msg_rcvd = msg_rcvd;
+    largs.new_fd = sockfd;
+    largs.mutex = &mutex;
+    largs.buffer = buffer;
+    largs.kill = &kill;
+   
+    pthread_t t1, t2;
+    pthread_create(&t1, NULL, listenMsgs, (void *)&largs);
+    pthread_create(&t2, NULL, sendMsg, (void *)&largs);
 
-    int n, i;
-    do {
-        //mvprintw(0, 0, "Hello world! Pressione alguma tecla (q para sair)!\n");
+    print_messages(msg_rcvd, buffer, &kill);
 
-        //cmd = getch();
-
-        move(y-2, 10);
-        getnstr(buffer, BUFF_SIZE);
-        move(y-2, 10);
-        for (int i=10; i<x; i++) printw(" ");
-        move(y-2, 10);
-        
-        send(sockfd, buffer, strlen(buffer)+1, 0);
-        writeMsg(buffer, "Me", &msg_pos);
-
-        rcv_size = recv(sockfd, buffer, BUFF_SIZE, 0);
-        if (rcv_size==0)
-            continue;
-        if (rcv_size < 0) {
-            printf("Error when receiving: %s\n", strerror(errno));
-            break;
-        }
-        
-        writeMsg(buffer, "127.0.0.1:9032", &msg_pos);
-
-
-        refresh();
-
-
-    } while (strcmp(buffer, "/exit") != 0); 
-
-    getch();
-
-    endwin();
-    close(sockfd);
+    interface_close(sockfd);
+    queue_delete(&msg_rcvd);
 
     return 0;
-
 
 }
