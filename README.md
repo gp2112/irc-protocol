@@ -4,13 +4,7 @@ This is a simples IRC client-server implementation in pure C for Computer Networ
 
 ## Compile
 
-Just
-
 ```sh
-gcc server.c -o server -lncurses
+make
 ```
-and
-
-```sh
-gcc client.c -o client -lncurses
-```
+(so hard, yey)
