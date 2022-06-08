@@ -1,6 +1,8 @@
 
 CC = gcc
-DEPS = queue.c irc.c buffer.c interface.c
+SRC = ./src
+DEPS = $(SRC)/queue.c $(SRC)/irc.c $(SRC)/buffer.c $(SRC)/interface.c
+
 FLAGS = -g
 LIBS = -lncurses -lpthread
 
@@ -10,10 +12,10 @@ all:
 	make client
 
 server:
-	$(CC) server.c $(DEPS) $(FLAGS) $(LIBS) -o server
+	$(CC) $(SRC)/server.c $(DEPS) $(FLAGS) $(LIBS) -o server
 
 client:
-	$(CC) client.c $(DEPS) $(FLAGS) $(LIBS) -o client
+	$(CC) $(SRC)/client.c $(DEPS) $(FLAGS) $(LIBS) -o client
 
 clear:
 ifneq (,$(wildcard server))
