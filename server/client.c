@@ -10,7 +10,7 @@
    that the client is running on, the username of the client on that
    host, and the server to which the client is connected.
 */
-
+#include "channel.h"
 
 #define MAXCHANNELS 11
 #define MAXCHATS 11
@@ -20,5 +20,4 @@ struct client_ {
     char *host;
     int port;
     CHANNEL *channels[MAXCHANNELS];
-    CLIENT *clients[MAXCHATS];
 }

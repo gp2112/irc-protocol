@@ -66,8 +66,23 @@
 
 */ 
 
+#include <stdlib.h>
+
 struct msg_ {
     char *prefix;
-    char *cmd;
+    int command;
     char *params; // separated by space
 };
+
+
+MESSAGE *msg_create(char *prefix, int command, char *params) {
+    
+    MESSAGE *msg = (MESSAGE*) malloc(sizeof(MESSAGE));
+    msg->prefix = prefix;
+    msg->command = command;
+    msg->params = params;
+
+    return msg;
+
+
+}
