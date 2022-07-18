@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include "irc.h"
 #include "interface.h"
+#include "controller.h"
 
 int connectServer(struct sockaddr_in *address, int sockfd, char *ip, int port) {
 
@@ -110,6 +111,7 @@ void *sendMsg(void *args) {
     QUEUE *msg_rcvd = largs->msg_rcvd;
     
     BUFFER *buffer = largs->buffer;
+    BUFFER *msgStr;
 
     int *mutex = largs->mutex, r;;
 
@@ -120,6 +122,7 @@ void *sendMsg(void *args) {
         if (*largs->kill)
             return NULL;
         msg = msg_create(buffer_content(buffer), "Me", 0);
+        msgStr = parseMsg( inet_ntoa(address.sin_addr), buffer_content(buffer));
         queue_insert(msg_rcvd, msg);
 
         r = send(new_fd, buffer_content(buffer), buffer_len(buffer), 0);

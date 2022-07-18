@@ -65,9 +65,25 @@ BUFFER *connectCommand (char *params) {
 	return msg;
 }
 
+BUFFER *prvmsgCommand (char *input) {
+	BUFFER *msg = cirarMsg (PRVMSG, input, 1);
+	return msg;
+}
 
-void parseMesage (char *input) {
+
+void parseMesage (char *peer_ip ,char *input) {
 	BUFFER *msgFinal;
+	char sourcePrefix[50];
+	sourcePrefix[] = ":";
+	sourcePrefix ++;
+
+	if (nickname != NULL) {
+		strcpy(sourcePrefix, nickname);
+		sourcePrefix += strlen(nickname);
+	}
+
+	*(sourcePrefix++) = "!";
+	strcpy(sourcePrefix, peer_ip);
 
 	if (input[0] == "/") {
 		// É um comando
@@ -89,6 +105,10 @@ void parseMesage (char *input) {
 			// Comando CONNECT
 			msgFinal = connectCommand (input+8);
 		}
+	}
+
+	else {
+		msg = prvmsgCommand(input);
 	}
 
 }

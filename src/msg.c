@@ -16,7 +16,10 @@ BUFFER *createMsg (int command, char **params, int nParams) {
 
 	int msgLen;
 
-	msgString = ":";
+	strcpy (msgString, prefix);
+	msgString += strlen(prefix);
+
+	msgString[] = ":";
 	//Anda com o 'cursor'
 	msgString++;
 
