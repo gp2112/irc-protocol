@@ -90,7 +90,10 @@ void *listenMsgs(void *args) {
         if (strcmp(buffer, "received!")==0)
             continue;
         getpeername(new_fd, (struct sockaddr *)&address, &len);
-        msg = msg_create(buffer, inet_ntoa(address.sin_addr), ntohs(address.sin_port)); 
+
+        msg = reparseMessage(buffer);
+        // msg = msg_create(buffer, inet_ntoa(address.sin_addr), ntohs(address.sin_port)); 
+
         queue_insert(msg_rcvd, msg);
 
         //writeMsg(buffer, "127.0.0.1:9340", &msg_pos);

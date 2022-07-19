@@ -10,11 +10,16 @@
 typedef struct n_msg_ {
     // servername / user
     char *prefix;
+
+    char *nickname;
+    char *host;
+
     // Usar defines
     int command;
     char **params; 
+    int nParams;
 } MSG;
 
-BUFFER *createMsg (int , char **, int ) {
+BUFFER *createMsg (int , char **, int )
 
 #endif

@@ -134,7 +134,6 @@ void reparseMessage (char *inString) {
 			}
 		}
 	}
-
 	/*
 	Obtemos:
 		nickname : char *
@@ -143,4 +142,13 @@ void reparseMessage (char *inString) {
 		params : (char *)[14]
 		nParams : int
 	*/
+
+	MSG *msg = (MSG *) malloc (sizeof(MSG));
+	msg->nickname = nickname;
+	msg->host = host;
+	msg->command = command;
+	msg->params = params;
+	msg->nParams = nParams;
+
+	return msg;
 }
