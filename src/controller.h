@@ -2,5 +2,6 @@
 #define NEW_MSG_H
 
     void parseMesage (char *, char *);
+    void reparseMessage (char *);
 
 #endif

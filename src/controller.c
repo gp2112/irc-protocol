@@ -37,7 +37,7 @@ BUFFER *quitCommand (char *params) {
 	// param: quit message
 	paramsArr[0] = readUntilSpace(params);
 
-	BUFFER *msg = cirarMsg (QUIT, paramsArr, 1);
+	BUFFER *msg = createMsg(QUIT, paramsArr, 1);
 
 	return msg;
 }
@@ -47,7 +47,7 @@ BUFFER *pingCommand (char *params) {
 	// param: server1 => server who is sending the PING
 	paramsArr[0] = readUntilSpace(params);
 
-	BUFFER *msg = cirarMsg (QUIT, paramsArr, 1);
+	BUFFER *msg = createMsg(QUIT, paramsArr, 1);
 
 	return msg;
 }
@@ -60,13 +60,13 @@ BUFFER *connectCommand (char *params) {
 	paramsArr[0] = targetServer;
 	paramsArr[1] = port;
 
-	BUFFER *msg = cirarMsg (CONNECT, paramsArr, 2);
+	BUFFER *msg = createMsg(CONNECT, paramsArr, 2);
 
 	return msg;
 }
 
 BUFFER *prvmsgCommand (char *input) {
-	BUFFER *msg = cirarMsg (PRVMSG, input, 1);
+	BUFFER *msg = createMsg(PRVMSG, input, 1);
 	return msg;
 }
 
@@ -96,12 +96,12 @@ void parseMesage (char *peer_ip ,char *input) {
 			
 		}
 
-		if (strncmp(input, "ping", 4)) {
+		else if (strncmp(input, "ping", 4)) {
 			// Comando PING
 			msgFinal = pingCommand(input+4);
 			
 		}
-		if (strncmp(input, "connect", 8)) {
+		else if (strncmp(input, "connect", 8)) {
 			// Comando CONNECT
 			msgFinal = connectCommand (input+8);
 		}

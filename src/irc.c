@@ -92,7 +92,7 @@ void *listenMsgs(void *args) {
         getpeername(new_fd, (struct sockaddr *)&address, &len);
         msg = msg_create(buffer, inet_ntoa(address.sin_addr), ntohs(address.sin_port)); 
         queue_insert(msg_rcvd, msg);
-
+        reparseMessage(msg->content);
         //writeMsg(buffer, "127.0.0.1:9340", &msg_pos);
 
         send(new_fd, "received!", 10, 0);
