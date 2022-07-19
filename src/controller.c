@@ -11,13 +11,13 @@
 #include "msg.h"
 
 
-char *readUntilSpace (char *str) {
+char *readUntilSpace (char *str, char C) {
 	char output = (char *) malloc(BUFF_SIZE);
 
 	int i = 0;
 	char c = str[i];
 
-	while (c != "\n" && c != " ") {
+	while (c != "\n" && c != C) {
 		output[i++] = c;
 		c = str[i];
 	}
@@ -111,4 +111,36 @@ void parseMesage (char *peer_ip ,char *input) {
 		msg = prvmsgCommand(input);
 	}
 
+}
+
+void reparseMessage (char *inString) {
+	if (inString[] == ":") {
+		inString++;
+		char *nickname = readUntilC (inString, "!");
+		char *host = readUntilC(inString, " ");
+		int command = *((int *)inString);
+
+		char (*params)[14]; 
+		for(int i=0; i<14; i++) {
+			// Consumir espaço (" ")
+			inString++;
+			params[i] = readUntilC(inString, " ");
+			// Consumir ":"
+			inString++;
+			if (inString[] == 13 && *(++inString)==10) {
+				// fim
+				nParams = i+1;
+				break;
+			}
+		}
+	}
+
+	/*
+	Obtemos:
+		nickname : char *
+		host : char * (ip)
+		command : int
+		params : (char *)[14]
+		nParams : int
+	*/
 }
