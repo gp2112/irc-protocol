@@ -63,6 +63,13 @@ MSG *msg_create(char *content, char *peer_ip, int port) {
     return msg;
 }
 
+void ACK(int sockfd, char * buffer) {
+	buffer[0] = 'a';
+	buffer[1] = 'c';
+	buffer[2] = 'k';
+	send(sockfd, buffer, 4096, 0);
+}
+
 void *listenMsgs(void *args) {
     struct listen_args *largs = (struct listen_args*)args;
     int new_fd = largs->new_fd;
@@ -95,6 +102,7 @@ void *listenMsgs(void *args) {
         reparseMessage(msg->content);
         //writeMsg(buffer, "127.0.0.1:9340", &msg_pos);
 
+        ACK(new_fd, buffer);
         send(new_fd, "received!", 10, 0);
     }
     return NULL;

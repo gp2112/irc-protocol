@@ -30,6 +30,7 @@ int main(int argc, char *argv[]) {
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     int server_fd = connectServer(&address, sockfd, ip, port);
 
+    //não conseguiu se conectar no server
     if (server_fd < 0) {
         printw(strerror(errno));
         return 1;
@@ -46,10 +47,14 @@ int main(int argc, char *argv[]) {
     largs.buffer = buffer;
     largs.kill = &kill;
    
-    pthread_t t1, t2;
-    pthread_create(&t1, NULL, listenMsgs, (void *)&largs);
-    pthread_create(&t2, NULL, sendMsg, (void *)&largs);
+    pthread_t listen, write;
+    pthread_create(&listen, NULL, listenMsgs, (void *)&largs);
+    pthread_create(&write, NULL, sendMsg, (void *)&largs);
 
+    pthread_join(listen, NULL);
+    pthread_join(write, NULL);
+
+    
     print_messages(msg_rcvd, buffer, &kill);
 
     interface_close(sockfd);
