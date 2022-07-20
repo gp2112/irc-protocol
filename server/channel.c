@@ -1,5 +1,6 @@
 #include "errors.h"
 #include <stdlib.h>
+#include <string.h>
 
 /*
  *
@@ -71,13 +72,9 @@ struct list_ {
 
 struct channel_ {
     char *name;
-    char *password;
-    char *topics;
     CLIENT *chanop;
     bool inv_only;
-    bool moderated;
     LIST *connected;
-    LIST *ban_list;
     LIST *pending; // invited users
     int users_limit;
     int n_users;
@@ -90,7 +87,7 @@ LIST *list_create(CLIENT *client) {
     return l;
 }
 
-int remove_client(LIST *list, CLIENT *client) {
+int channel_remove_client(LIST *list, CLIENT *client) {
     while (l->next != NULL && l->next->client != client) l = l->next;
     if (l->client != client && l->next == NULL) 
         return ERR_NOTONCHANNEL;
@@ -104,44 +101,41 @@ int remove_client(LIST *list, CLIENT *client) {
     return 0;
 }
 
-bool find_client(LIST* l, CLIENT *client) {
-    while (l != NULL && 
-            l->client->name != client->name &&
-            l->client->host != client->host
-        ) l = l->next;
 
-    return l==NULL;
+CHANNEL *channel_create(CLIENT *client_op, char *name, bool inv_only, int users_limit) {
+    if (client_op == NULL) return NULL;
+
+    CHANNEL *chan = (CHANNEL *)malloc(sizeof(CHANNEL));
+    chan->name = (char*)malloc((strlen(name)+1)*sizeof(char));
+    strcpy(chan->name, name);
+    chan->inv_only = inv_only;
+    chan->n_users = 1;
+    chan->users_limit = users_limit;
+
+    chan->connected = list_create(client_op);
+
+    return chan;
 
 }
 
-bool channel_is_banned(CHANNEL *ch, CLIENT *client) {
-    return find_client(ch->ban_list, client);
-}
 
 bool channel_is_invited(CHANNEL *ch, CLIENT *client) {
     return find_client(ch->invited, client);
 }
 
+CLIENT_LIST *client_list_append(LIST *clients, CLIENT *client) {
+    LIST *new_clients = (LIST*) malloc(sizeof(LIST));
+    new_clients->next = clients;
+    new_clients->client = client;
+
+    return new_clients;
+}
+
 // join channel #name
 //
-int channel_join(CHANNEL *ch, CLIENT *client, MSG *msg) {
+int channel_join(CHANNEL *ch, CLIENT *client) {
 
-     if (ch->n_users == users_limit)
-         return ERR_CHANNELISFULL;
-
-     //if (client) return ERR_TOOMANYCHANNELS;
-
-     if (channel_is_banned(ch, client))
-         return ERR_BANNEDFROMCHAN;
-
-     if (!channel_is_invited(ch, client))
-         return ERR_INVITEONLYCHAN;
-
-     if (ch->password != NULL) {
-         char *passwd_input = MSG_param(msg, "password");
-         if (passwd_input == NULL) return ERR_NEEDMOREPARAMS;
-         if (strcmp(passwd_input, ch->password)) return ERR_BADCHANNELKEY;
-     }
+    ch->clients = client_list_append(ch->clients, client);
     
     return 0;
 }
@@ -173,4 +167,12 @@ int channel_kick(CHANNEL *ch, CLIENT *client_by, CLIENT *client_to) {
         return ERR_CHANOPRIVSNEEDED;
     remove_client(ch->connected, client_to);
     return 0;
+}
+
+void channel_delete(CHANNEL **ch) {
+    if (*ch == NULL) return ;
+
+    free((*ch)->name);
+    free(*ch);
+    *ch = NULL;
 }
