@@ -4,10 +4,10 @@
 #define MAX_CLIENT_NAME 20
 
 #include "queue.h"
-#include "channel.h"
 
-typedef
-struct client_ {
+typedef struct channel_ CHANNEL;
+
+typedef struct client_ {
     char *nick;
     char *host;
     int socket;
@@ -16,6 +16,8 @@ struct client_ {
     CHANNEL *current_channel;
     QUEUE *out_queue;
 } CLIENT;
+
+#include "channel.h"
 
 CLIENT *client_create(char *nick, char *hostname, int client_socket, 
                                                 int port, pthread_t *conn);

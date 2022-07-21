@@ -2,10 +2,10 @@
 #define CHANNEL_H
 
 
-typedef struct channel_ CHANNEL;
 #include "client.h"
 
-#define MAX_CHANNEL_NAME 56;
+#define MAX_CHANNEL_NAME 56
+#define BUFFERSIZE 255
 
 char channel_is_banned(CHANNEL *ch, CLIENT *client);
 char channel_is_invited(CHANNEL *ch, CLIENT *client);

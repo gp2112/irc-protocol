@@ -14,7 +14,7 @@
 #define JOIN        0b0001010
 #define KICK        0b0001011
 #define MUTE        0b0001100
-#define UNMUT       0b0001101
+#define UNMUTE      0b0001101
 #define WHOIS       0b0001110
 #define TEXT        0b0001111
 

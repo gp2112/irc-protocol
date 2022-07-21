@@ -1,3 +1,4 @@
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -9,13 +10,13 @@
 #include <pthread.h>
 
 
+#include "channel.h"
+#include "server.h"
 #include "errors.h"
 #include "logger.h"
 #include "flags.h"
-#include "server.h"
 #include "queue.h"
-
-
+#include "controller.h"
 
 
 
@@ -103,8 +104,9 @@ CLIENT *server_find_client_by_hostname(SERVER *server, char *hostname) {
 
     CLIENT_LIST *client_list = server->clients;
     while (client_list != NULL) {
-        if (strcmp(client_list->client->host, hostname)==0)
+        if (strcmp((client_list->client)->host, hostname)==0)
             return client_list->client;
+        client_list = client_list->next;
     }
     return NULL;
 }
@@ -113,8 +115,9 @@ CLIENT *server_find_client_by_hostname(SERVER *server, char *hostname) {
 CHANNEL *server_find_channel_by_name(SERVER *server, char *name) {
     CHANNEL_LIST *channel_list = server->channels;
     while (channel_list != NULL) {
-        if (strcmp(channel_list->channel->name, name)==0)
+        if (strcmp((channel_list->channel)->name, name)==0)
             return channel_list->channel;
+        channel_list = channel_list->next;
     }
     return NULL;
 }
@@ -142,7 +145,7 @@ void server_response(SERVER *server, CLIENT *client, int resp_code) {
     logger_debug("Sending message...");
 
     if ( send(client->socket, &resp_code, sizeof(int), 0) == -1) {
-        logger.warning("Error when replying to user.");
+        logger_warning("Error when replying to user.");
         return ;
     }
     
@@ -168,7 +171,7 @@ void *server_listen_client(void *args) {
         while (!queue_empty(client->out_queue)) {
             tmp = queue_pop(client->out_queue);
 
-            size = send(client->socket, tmp, strlen(tmp)*sizeof(char));
+            size = send(client->socket, tmp, strlen(tmp)*sizeof(char), 0);
             if (size == -1) {
                 logger_error("Error when sending message to client.");
                 continue;
@@ -178,7 +181,7 @@ void *server_listen_client(void *args) {
                 logger_error("Error when receiving a message.");
                 continue;
             }
-            logger.debug("Message received by client");
+            logger_debug("Message received by client");
         }
 
         size = recv(client->socket, buffer, BUFFERSIZE, MSG_WAITALL); // may set MSG_WAITALL ?
@@ -189,7 +192,7 @@ void *server_listen_client(void *args) {
             continue;
         }
 
-        logger.info("Message received from ");
+        logger_info("Message received from ");
         
         resp_code = control_parse_msg(server, client, buffer);
         if (resp_code == -1) continue;

@@ -148,7 +148,7 @@ void channel_transmit_message(CHANNEL *channel, CLIENT *sender, char *text) {
 
 }
 
-int channel_remove_client(LIST *list, CLIENT *client) {
+int channel_remove_client(LIST *l, CLIENT *client) {
     while (l->next != NULL && l->next->client != client) l = l->next;
     if (l->client != client && l->next == NULL) 
         return ERR_NOTONCHANNEL;
@@ -195,10 +195,18 @@ CLIENT *channel_mod(CHANNEL *channel) {
 }
 
 char channel_is_invited(CHANNEL *ch, CLIENT *client) {
-    return find_client(ch->invited, client);
+    LIST *l = ch->pending;
+    while (l != NULL) {
+        if (strcmp(l->client->nick, client->nick))
+            return 1;
+
+        l = l->next;
+    }
+    return 0;
+    // return channel_find_client(ch->pending, client);
 }
 
-CLIENT_LIST *client_list_append(LIST *clients, CLIENT *client) {
+LIST *client_list_append(LIST *clients, CLIENT *client) {
     LIST *new_clients = (LIST*) malloc(sizeof(LIST));
     new_clients->next = clients;
     new_clients->client = client;
@@ -210,24 +218,24 @@ CLIENT_LIST *client_list_append(LIST *clients, CLIENT *client) {
 //
 int channel_join(CHANNEL *ch, CLIENT *client) {
 
-    ch->clients = client_list_append(ch->clients, client);
+    ch->connected = client_list_append(ch->connected, client);
     
     return 0;
 }
 
 int channel_exit(CHANNEL *ch, CLIENT *client) {
-    while (l->next != NULL && l->next->client != client) l = l->next;
-    if (l->client != client && l->next == NULL) 
-        return ERR_NOTONCHANNEL;
+    // while (l->next != NULL && l->next->client != client) l = l->next;
+    // if (l->client != client && l->next == NULL) 
+    //     return ERR_NOTONCHANNEL;
 
-    remove_client(ch->connected, client);
+    channel_remove_client(ch->connected, client);
 
     return 0;
 }
 
 
 int channel_kick(CHANNEL *ch, CLIENT *client_by, CLIENT *client_to) {
-    remove_client(ch->connected, client_to);
+    channel_remove_client(ch->connected, client_to);
     return 0;
 }
 

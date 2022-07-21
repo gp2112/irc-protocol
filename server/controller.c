@@ -1,7 +1,13 @@
 #include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include "channel.h"
 #include "controller.h"
 #include "commands.h"
 #include "errors.h"
+#include "logger.h"
 
 
 int cmd_join(SERVER *server, CLIENT *client, char *buffer) {
@@ -28,10 +34,10 @@ int cmd_nickname(SERVER *server, CLIENT *client, char *buffer) {
 
     name[i] = '\0';
 
-    if (client->name == NULL)
-        client->name = (char*)malloc(MAX_CLIENT_NAME*sizeof(char));
+    if (client->nick == NULL)
+        client->nick = (char*)malloc(MAX_CLIENT_NAME*sizeof(char));
 
-    strncpy(client->name, name, MAX_CLIENT_NAME);
+    strncpy(client->nick, name, MAX_CLIENT_NAME);
 
 
     return 0;
@@ -39,7 +45,7 @@ int cmd_nickname(SERVER *server, CLIENT *client, char *buffer) {
 }
 
 int cmd_kick(SERVER *server, CLIENT *client, char *buffer) {
-    if (client != channel_mod(client->current_channel))
+    if (client->host != channel_mod(client->current_channel)->host)
         return ERR_NOPRIVILEGES;
 
     char name[MAX_CLIENT_NAME]; int i=0;
@@ -51,7 +57,7 @@ int cmd_kick(SERVER *server, CLIENT *client, char *buffer) {
     CLIENT *kicked_client = channel_find_client(client->current_channel, name);
     if (kicked_client == NULL)
         return ERR_USERNOTINCHANNEL;
-    channel_remove_client(client->current_channel, kicked_client);
+    channel_kick(client->current_channel, client, kicked_client);
     return 0;
 }
 
@@ -88,10 +94,10 @@ int cmd_whois(SERVER *server, CLIENT *client, char *buffer) {
     name[i] = '\0';
 
     CLIENT *whois_client = channel_find_client(client->current_channel, name);
-    if (whois_client === NULL)
+    if (whois_client == NULL)
         return ERR_USERNOTINCHANNEL;
 
-    int r = send(client->socket, client->host, strlen(client->host)*sizeof(char));
+    int r = send(client->socket, client->host, strlen(client->host)*sizeof(char), 0);
     if (r == -1) {
         logger_error("Failed to reply client.");
     }
@@ -112,7 +118,7 @@ int control_parse_msg(SERVER *server, CLIENT *client, char *buffer) {
         case NICKNAME:
             return cmd_nickname(server, client, buffer);
     
-        case PING;
+        case PING:
             return PONG;
 
         case KICK:
