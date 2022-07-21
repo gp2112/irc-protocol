@@ -11,19 +11,16 @@
    host, and the server to which the client is connected.
 */
 #include <stdlib.h>
+#include <pthread.h>
 #include "channel.h"
-
-#define MAXCHANNELS 11
-#define MAXCHATS 11
-
-struct client_ {
-    char *nick;
-    char *host;
-    int port;
-}
+#include "client.h"
 
 
-CLIENT *client_create(char *nick, char *hostname, int port) {
+
+
+CLIENT *client_create(char *nick, char *hostname, int client_socket, 
+                                                int port, pthread_t *conn) {
+
     CLIENT *client = (CLIENT *)malloc(sizeof(CLIENT));
     client->nick = NULL;
     if (nick != NULL) {
@@ -35,6 +32,8 @@ CLIENT *client_create(char *nick, char *hostname, int port) {
     strcpy(client->hostname, hostname);
 
     client->port = port;
+    client->socket = client_socket;
+    client->conn_thread = conn_thread;
 
     return client;
 
