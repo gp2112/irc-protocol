@@ -1,7 +1,8 @@
-#include "errors.h"
 #include <stdlib.h>
 #include <string.h>
 
+#include "channel.h"
+#include "errors.h"
 /*
  *
  * RFC 1459              Internet Relay Chat Protocol              May 1993
@@ -68,12 +69,13 @@ typedef struct list_ LIST;
 struct list_ {
     LIST *next;
     CLIENT *client;
-}
+    char is_muted;
+};
 
 struct channel_ {
     char *name;
     CLIENT *chanop;
-    bool inv_only;
+    char inv_only;
     LIST *connected;
     LIST *pending; // invited users
     int users_limit;
@@ -85,6 +87,65 @@ LIST *list_create(CLIENT *client) {
     l->client = client;
     l->next = NULL;
     return l;
+}
+
+char channel_client_is_muted(CHANNEL *channel, CLIENT *client) {
+    LIST *l = channel->connected;
+    while (l != NULL) {
+        if (l->client == client)
+            return l->is_muted;
+
+        l = l->next;
+    }
+    return -1;
+}
+
+void channel_client_mute(CHANNEL *channel, CLIENT *client) {
+    LIST *l = channel->connected;
+    while (l != NULL) {
+        if (l->client == client) {
+             l->is_muted = 1;
+        }
+
+        l = l->next;
+    }
+
+}
+
+void channel_client_unmute(CHANNEL *channel, CLIENT *client) {
+    LIST *l = channel->connected;
+    while (l != NULL) {
+        if (l->client == client) {
+             l->is_muted = 0;
+        }
+
+        l = l->next;
+    }
+
+}
+
+void channel_transmit_message(CHANNEL *channel, CLIENT *sender, char *text) {
+    char buffer[BUFFERSIZE];
+    LIST *l = channel->connected;
+
+    char *nick = sender->nick;
+    if (nick == NULL)
+        nick = sender->host;
+
+    strncpy(buffer, nick, MAX_CLIENT_NAME);
+    char *next = buffer + strlen(nick);
+    strncpy(next, " : ", 3); next += 3;
+    strncpy(next, text, BUFFERSIZE-strlen(nick)-4);
+
+
+    while (l != NULL) {
+        if (l->client == sender) continue;
+        
+        queue_insert(l->client->out_queue, buffer);
+
+    }
+
+
 }
 
 int channel_remove_client(LIST *list, CLIENT *client) {
@@ -101,8 +162,18 @@ int channel_remove_client(LIST *list, CLIENT *client) {
     return 0;
 }
 
+CLIENT *channel_find_client(CHANNEL *channel, char *name) {
+    LIST *l = channel->connected;
+    while (l != NULL) {
+        if (strcmp(l->client->nick, name))
+            return l->client;
 
-CHANNEL *channel_create(CLIENT *client_op, char *name, bool inv_only, int users_limit) {
+        l = l->next;
+    }
+    return NULL;
+}
+
+CHANNEL *channel_create(CLIENT *client_op, char *name, char inv_only, int users_limit) {
     if (client_op == NULL) return NULL;
 
     CHANNEL *chan = (CHANNEL *)malloc(sizeof(CHANNEL));
@@ -118,8 +189,12 @@ CHANNEL *channel_create(CLIENT *client_op, char *name, bool inv_only, int users_
 
 }
 
+CLIENT *channel_mod(CHANNEL *channel) {
+    if (channel == NULL) return NULL;
+    return channel->chanop;
+}
 
-bool channel_is_invited(CHANNEL *ch, CLIENT *client) {
+char channel_is_invited(CHANNEL *ch, CLIENT *client) {
     return find_client(ch->invited, client);
 }
 
@@ -150,21 +225,8 @@ int channel_exit(CHANNEL *ch, CLIENT *client) {
     return 0;
 }
 
-int channel_ban(CHANNEL *ch, CLIENT *client_by, CLIENT *client_to) {
-    if (ch->chanop != client_by)
-        return ERR_CHANOPRIVSNEEDED;
-    if (channel_is_banned(client_to))
-        return 0;
-    remove_client(ch->connected, client_to);
-    LIST *tmp = ch->ban_list;
-    ch->ban_list = list_create(client_to);
-    ch->ban_list->next = tmp;
-    return 0;
-}
 
 int channel_kick(CHANNEL *ch, CLIENT *client_by, CLIENT *client_to) {
-    if (ch->chanop != client_by)
-        return ERR_CHANOPRIVSNEEDED;
     remove_client(ch->connected, client_to);
     return 0;
 }

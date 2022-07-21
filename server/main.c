@@ -5,7 +5,7 @@
 
 
 int main(int argc, char *argv[]) {
-    signal(SIGINT, sig_handle_sigint);signal(SIGINT, sig_handle_sigint);;  
+    signal(SIGINT, sig_handle_sigint);
     return 0;
 
 }

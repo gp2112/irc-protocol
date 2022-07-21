@@ -1,20 +1,26 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <unistd.h>
 #include <errno.h>
+#include <arpa/inet.h>
+#include <pthread.h>
 
 
-#include "message.h"
 #include "errors.h"
-#include "client.h"
 #include "logger.h"
 #include "flags.h"
+#include "server.h"
+#include "queue.h"
 
-#define BUFFERSIZE 255;
 
-typedef clients_ CLIENT_LIST;
-typedef channels_ CHANNEL_LIST;
+
+
+
+typedef struct clients_ CLIENT_LIST;
+typedef struct channels_ CHANNEL_LIST;
 
 struct clients_ {
     CLIENT_LIST* next;
@@ -92,7 +98,7 @@ SERVER *server_init(char *hostname, int port) {
 }
 
 CLIENT *server_find_client_by_hostname(SERVER *server, char *hostname) {
-    char *dmsg[100] = "Finding hostname: "; 
+    char dmsg[100] = "Finding hostname: "; 
     logger_debug(strncat(dmsg, hostname, 80));
 
     CLIENT_LIST *client_list = server->clients;
@@ -103,21 +109,12 @@ CLIENT *server_find_client_by_hostname(SERVER *server, char *hostname) {
     return NULL;
 }
 
-int server_connect_client(SERVER *server, char *hostname, int client_socket, int port) {
-
-    CLIENT *client = client_create(NULL, hostname, client_socket, port);
-
-    server->clients = client_list_append(server->clients, client);
-    
-
-    return 0;
-}
 
 CHANNEL *server_find_channel_by_name(SERVER *server, char *name) {
     CHANNEL_LIST *channel_list = server->channels;
     while (channel_list != NULL) {
-        if (strcmp(channel_list->channel->name, nname)==0)
-            return client_list->client;
+        if (strcmp(channel_list->channel->name, name)==0)
+            return channel_list->channel;
     }
     return NULL;
 }
@@ -127,6 +124,7 @@ int server_create_channel(SERVER *server, CLIENT *client, char *name) {
     if (server == NULL) return -1;
 
     CHANNEL *channel = channel_create(client, name, 0, 100);
+    client->current_channel = channel;
     server->channels = channel_list_append(server->channels, channel);
     
     return 0;
@@ -139,6 +137,18 @@ struct {
 
 } server_client_pair;
 
+void server_response(SERVER *server, CLIENT *client, int resp_code) {
+    
+    logger_debug("Sending message...");
+
+    if ( send(client->socket, &resp_code, sizeof(int), 0) == -1) {
+        logger.warning("Error when replying to user.");
+        return ;
+    }
+    
+    logger_debug("Success on replying to user!");
+
+}
 
 // thread function
 void *server_listen_client(void *args) {
@@ -146,33 +156,66 @@ void *server_listen_client(void *args) {
     CLIENT *client = sc->client;
     SERVER *server = sc->server;
 
+    int resp_code;
+
     char buffer[BUFFERSIZE];
+    char *tmp;
 
     ssize_t size;
 
     while (!stop_server) {
-        size = recv(client->socket, buffer, BUFFERSIZE 0); // may set MSG_WAITALL ?
+
+        while (!queue_empty(client->out_queue)) {
+            tmp = queue_pop(client->out_queue);
+
+            size = send(client->socket, tmp, strlen(tmp)*sizeof(char));
+            if (size == -1) {
+                logger_error("Error when sending message to client.");
+                continue;
+            }
+            size = recv(client->socket, buffer, BUFFERSIZE, 0);
+            if (size == -1) {
+                logger_error("Error when receiving a message.");
+                continue;
+            }
+            logger.debug("Message received by client");
+        }
+
+        size = recv(client->socket, buffer, BUFFERSIZE, MSG_WAITALL); // may set MSG_WAITALL ?
+        
         if (size == -1) {
             logger_error("Error when receiving a message.");
             sleep(5);
             continue;
         }
+
+        logger.info("Message received from ");
+        
+        resp_code = control_parse_msg(server, client, buffer);
+        if (resp_code == -1) continue;
+
+        server_response(server, client, resp_code);
     }
-    
+   
+    return NULL;
 
 }
 
-void start_listening_thread(SERVER *server, char *addr, int cli_socket, int port) {
+int server_connect_client(SERVER *server, char *addr, int cli_socket, int port) {
 
     pthread_t thread_id;
 
-    client = client_create(NULL, cli_address, cli_socket, cli_port, &thread_id);
+    CLIENT *client = client_create(NULL, addr, cli_socket, port, &thread_id);
     server_client_pair *sc = (server_client_pair*)malloc(sizeof(server_client_pair));
     sc->server = server;
     sc->client = client;
 
-    pthread_create(&thread_id, NULL, (void *)sc);
+    server->clients = client_list_append(server->clients, client);
+
+    pthread_create(&thread_id, NULL, server_listen_client, (void *)sc);
+    return 0;
 }
+
 
 void server_run(SERVER *server) {
     
@@ -183,7 +226,7 @@ void server_run(SERVER *server) {
     int sin_size = sizeof(struct sockaddr);
     int client_socket, cli_port;
     char msg_buffer[60] = "Received connection from ",
-         msg_error[100] = "Connection failed: "
+         msg_error[100] = "Connection failed: ",
          *cli_address;
 
     CLIENT *client = NULL;

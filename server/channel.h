@@ -3,14 +3,21 @@
 
 
 typedef struct channel_ CHANNEL;
+#include "client.h"
 
+#define MAX_CHANNEL_NAME 56;
 
-bool channel_is_banned(CHANNEL *ch, CLIENT *client);
-bool channel_is_invited(CHANNEL *ch, CLIENT *client);
-int channel_join(CHANNEL *ch, CLIENT *client, MSG *msg);
+char channel_is_banned(CHANNEL *ch, CLIENT *client);
+char channel_is_invited(CHANNEL *ch, CLIENT *client);
+int channel_join(CHANNEL *ch, CLIENT *client);
 int channel_exit(CHANNEL *ch, CLIENT *client);
 int channel_ban(CHANNEL *ch, CLIENT *client_by, CLIENT *client_to);
 int channel_kick(CHANNEL *ch, CLIENT *client_by, CLIENT *client_to);
-
+CHANNEL *channel_create(CLIENT *client_op, char *name, char inv_only, int users_limit);
+CLIENT *channel_mod(CHANNEL *channel);
+CLIENT *channel_find_client(CHANNEL *channel, char *name);
+char channel_client_is_muted(CHANNEL *channel, CLIENT *client);
+void channel_client_mute(CHANNEL *channel, CLIENT *client);
+void channel_client_unmute(CHANNEL *channel, CLIENT *client);
 
 #endif

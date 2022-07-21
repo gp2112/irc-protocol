@@ -24,5 +24,7 @@
 #define ERR_NOTREGISTERED      451
 #define ERR_NOSUCHSERVER       402
 #define ERR_NOTEXTTOSEND       412
+#define ERR_UNKNOWNCOMMAND     421
+#define ERR_NOPRIVILEGES       481
 
 #endif

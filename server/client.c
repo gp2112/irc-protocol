@@ -12,9 +12,9 @@
 */
 #include <stdlib.h>
 #include <pthread.h>
-#include "channel.h"
-#include "client.h"
 
+#include "client.h"
+#include "queue.h"
 
 
 
@@ -34,6 +34,8 @@ CLIENT *client_create(char *nick, char *hostname, int client_socket,
     client->port = port;
     client->socket = client_socket;
     client->conn_thread = conn_thread;
+    client->current_channel = NULL;
+    client->out_queue = queue_create();
 
     return client;
 
