@@ -18,9 +18,6 @@ BUFFER *createMsg (int command, char **params, int nParams) {
 
 	int msgLen;
 
-	strcpy (msgString, prefix);
-	msgString += strlen(prefix);
-
 	memcpy(msgString, &command, sizeof(int));
 	msgString += sizeof(int);
 

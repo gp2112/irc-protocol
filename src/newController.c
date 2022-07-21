@@ -74,10 +74,15 @@ BUFFER *prvmsgCommand (char *input) {
 	return msg;
 }
 
-BUFFER *oneParamCommand (char *params) {
+BUFFER *noParamCommand (char *params, int command) {
+	BUFFER *msg = cirarMsg (command, NULL, 0);
+	return msg;
+}
+
+BUFFER *oneParamCommand (char *params, int command) {
     char **paramsArr = (char *)[1];
     paramsArr[0] = readUntilC(params, " ");
-	BUFFER *msg = cirarMsg (JOIN, paramsArr, 1);
+	BUFFER *msg = cirarMsg (command, paramsArr, 1);
     free(paramsArr[0]);
 	return msg;
 }
@@ -94,7 +99,7 @@ void parseMesage (char *peer_ip ,char *input) {
 		input++;
 
 		if (strncmp(input, "quit", 4)) {
-			msgFinal = quitCommand(input+4);
+			msgFinal = noParamCommand(input+4, QUIT);
 		}
 		else if (strncmp(input, "ping", 4)) {
 			msgFinal = pingCommand(input+4);
@@ -103,22 +108,22 @@ void parseMesage (char *peer_ip ,char *input) {
 			msgFinal = connectCommand (input+8);
 		}
 		else if (strncmp(input, "join", 4)) {
-			msgFinal = oneParamCommand (input+4);
+			msgFinal = oneParamCommand (input+4, JOIN);
 		}
 		else if (strncmp(input, "nickname", 8)) {
-			msgFinal = oneParamCommand (input+8);
+			msgFinal = oneParamCommand (input+8, NICKNAME);
 		}
 		else if (strncmp(input, "kick", 4)) {
-			msgFinal = oneParamCommand (input+8);
+			msgFinal = oneParamCommand (input+8, KICK);
 		}
 		else if (strncmp(input, "mute", 4)) {
-			msgFinal = oneParamCommand (input+4);
+			msgFinal = oneParamCommand (input+4, MUTE);
 		}
 		else if (strncmp(input, "unmute", 6)) {
-			msgFinal = oneParamCommand (input+6);
+			msgFinal = oneParamCommand (input+6, UNMUTE);
 		}
 		else if (strncmp(input, "whois", 5)) {
-			msgFinal = oneParamCommand (input+5);
+			msgFinal = oneParamCommand (input+5, WHOIS);
 		}
 	}
 
