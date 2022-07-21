@@ -146,7 +146,7 @@ char channel_is_invited(CHANNEL *ch, CLIENT *client) {
     // return channel_find_client(ch->pending, client);
 }
 
-LIST *client_list_append(LIST *clients, CLIENT *client) {
+LIST *channel_client_list_append(LIST *clients, CLIENT *client) {
     LIST *new_clients = (LIST*) malloc(sizeof(LIST));
     new_clients->next = clients;
     new_clients->client = client;
@@ -158,7 +158,7 @@ LIST *client_list_append(LIST *clients, CLIENT *client) {
 //
 int channel_join(CHANNEL *ch, CLIENT *client) {
 
-    ch->connected = client_list_append(ch->connected, client);
+    ch->connected = channel_client_list_append(ch->connected, client);
     
     return 0;
 }
@@ -173,6 +173,11 @@ int channel_exit(CHANNEL *ch, CLIENT *client) {
     return 0;
 }
 
+char *channel_name(CHANNEL *channel) {
+    if (channel != NULL) return NULL;
+
+    return channel->name;
+}
 
 int channel_kick(CHANNEL *ch, CLIENT *client_by, CLIENT *client_to) {
     channel_remove_client(ch->connected, client_to);

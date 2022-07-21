@@ -1,7 +1,7 @@
 
 CC = gcc
 SRC = ./src
-DEPS = ./server/channel.c ./server/client.c ./server/controller.c ./server/datetime.c ./server/logger.c ./server/queue.c ./server/server.c ./server/signalhandler.c
+DEPS = ./server/channel.c ./server/client.c ./server/controller.c ./server/datetime.c ./server/logger.c ./server/queue.c ./server/server.c ./server/signalhandler.c ./server/main.c
 
 FLAGS = -g
 LIBS = -lpthread

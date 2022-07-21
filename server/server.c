@@ -115,7 +115,7 @@ CLIENT *server_find_client_by_hostname(SERVER *server, char *hostname) {
 CHANNEL *server_find_channel_by_name(SERVER *server, char *name) {
     CHANNEL_LIST *channel_list = server->channels;
     while (channel_list != NULL) {
-        if (strcmp((channel_list->channel)->name, name)==0)
+        if (strcmp(channel_name(channel_list->channel), name)==0)
             return channel_list->channel;
         channel_list = channel_list->next;
     }
@@ -192,10 +192,10 @@ void *server_listen_client(void *args) {
             continue;
         }
 
-        logger_info("Message received from ");
+        logger_info("%s", "Message received from ", client->host);
         
         resp_code = control_parse_msg(server, client, buffer);
-        if (resp_code == -1) continue;
+        if (resp_code == -1) continue; // does not need response: already replyed
 
         server_response(server, client, resp_code);
     }
@@ -205,6 +205,8 @@ void *server_listen_client(void *args) {
 }
 
 int server_connect_client(SERVER *server, char *addr, int cli_socket, int port) {
+    
+    logger.debug("%s %s %s", "Creating and connecting ", addr," to server...");
 
     pthread_t thread_id;
 
@@ -238,7 +240,6 @@ void server_run(SERVER *server) {
                                 (struct sockaddr*)&address, &sin_size);
         
         if (client_socket == -1) {
-            // strncat(msg_error, strerror(errno), 78);
             logger_error("%s %s", "Connection failed: ", strerror(errno));
             continue;
         }
@@ -256,11 +257,47 @@ void server_run(SERVER *server) {
 };
 
 int server_client_join_channel(SERVER *server, CLIENT *client, char *channel_name) {
-    
+    logger_info("%s %s %s", client->host, " joining #", channel_name);
+
     CHANNEL *channel = server_find_channel_by_name(server, channel_name);
     if (!channel)
         return server_create_channel(server, client, channel_name);
 
     channel_join(channel, client);
+
+}
+
+void list_clients_delete(CLIENT_LIST **clients) {
+    logger_debug("%s", "Deleting client list...");
+
+    CLIENT_LIST *tmp = *clients;
+    while (tmp != NULL) {
+        client_delete(&clients->client);
+        clients = clients->next;
+    }
+
+    *clients = NULL;
+}
+
+void list_channels_delete(CHANNEL_LIST **channels) {
+
+    logger_debug("%s", "Deleting channel list...");
+
+    CHANNEL_LIST *tmp = *channels;
+    while (tmp != NULL) {
+        channel_delete(&channels->channel);
+        channels = channels->next;
+    }
+    *channels = NULL;
+}
+
+void server_delete(SERVER **server) {
+    logger_debug("%s %d", "Deleting server...", *server);
+
+    if (*server==NULL) {
+        logger_debug("%s", "Server already NULL");
+        return ;
+    }
+    list_clients_delete(&server->clients);
 
 }
