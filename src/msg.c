@@ -5,9 +5,11 @@
 #include <errno.h>
 #include <ncurses.h>
 #include <ctype.h>
+
 #include "irc.h"
 #include "buffer.h"
 #include "msg.h"
+#include "commands.h"
 
 BUFFER *createMsg (int command, char **params, int nParams) {
 	char *msgString[BUFF_SIZE];
@@ -19,31 +21,12 @@ BUFFER *createMsg (int command, char **params, int nParams) {
 	strcpy (msgString, prefix);
 	msgString += strlen(prefix);
 
-	msgString[] = ":";
-	//Anda com o 'cursor'
-	msgString++;
-
-	strncpy(msgString, HOST, HOST_LEN);
-	msgString += HOST_LEN;
-
-	msgString[] = " ";
-	msgString++;
-
-
-	strcpy(msgString, &command, sizeof(int));
+	memcpy(msgString, &command, sizeof(int));
 	msgString += sizeof(int);
 
 	for (int i=0; i<nParams; i++) {
-		msgString[] = " ";
-		msgString++;
-
 		strcpy(msgString, param[i], strlen(param[i]));
 		msgString += strlen(param[i]);
-
-		msgString[] = " ";
-		msgString++;
-		msgString[] = ":";
-		msgString++;
 	}
 
 

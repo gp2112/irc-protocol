@@ -145,7 +145,7 @@ void inter_getIpPort(BUFFER *buffer, char *ip, int *port) {
 
 void print_messages(QUEUE *msg_rcvd, BUFFER *buffer, int *kill) {
     int x, y, msg_pos=2;
-    MSG *msg;
+    char *msg;
     char *pongMsg = (char *)malloc(256);
 
     while(!(*kill)) {
@@ -153,16 +153,14 @@ void print_messages(QUEUE *msg_rcvd, BUFFER *buffer, int *kill) {
 
         while (!queue_empty(msg_rcvd)) {
             msg = queue_pop(msg_rcvd);
-            if (msg->command == PRIVMSG) {
-                writeMsg(msg->params[1], msg->nickname ? msg->nickname : msg->host, 0, &msg_pos);
-                // writeMsg(msg->content, msg->peer_ip, msg->peer_port, &msg_pos);
-            }
-            else if (msg->command == PONG) {
-                strcat (pongMsg, "\tSERVIDOR (");
-                strcat (pongMsg, msg->params[0]);
-                strcat (pongMsg, ") - PONG");
-
-                writeMsg(pongMsg, "", 0, &msg_pos);
+            if (msg[] == MSGSTART) {
+                if ( memcmp (++msg, PONG,) == PRIVMSG) {
+                    writeMsg("\tSERVIDOR : PONG", "", 0, &msg_pos);
+                }
+                else if (msg->command == PONG) {
+                    writeMsg(msg, "", 0, &msg_pos);
+                    // writeMsg(msg->content, msg->peer_ip, msg->peer_port, &msg_pos);
+                }
             }
         }
 
