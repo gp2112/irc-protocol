@@ -4,8 +4,8 @@
 
 typedef struct channel_ CHANNEL;
 #include "client.h"
+#include "params.h"
 
-#define MAX_CHANNEL_NAME 56;
 
 char channel_is_banned(CHANNEL *ch, CLIENT *client);
 char channel_is_invited(CHANNEL *ch, CLIENT *client);

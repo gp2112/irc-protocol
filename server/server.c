@@ -62,7 +62,7 @@ CHANNEL_LIST *channel_list_append(CHANNEL_LIST *channels, CHANNEL *channel) {
 
 SERVER *server_init(char *hostname, int port) {
     
-    logger_debug("Server init");
+    logger_debug("%s", "Server init");
 
     SERVER *server = (SERVER *)malloc(sizeof(SERVER));
     server->hostname = (char*)malloc((strlen(hostname)+1)*sizeof(char));
@@ -80,12 +80,12 @@ SERVER *server_init(char *hostname, int port) {
     int r, sockfd = socket(PF_INET, SOCK_STREAM, 0),
            sin_size = sizeof(struct sockaddr);
 
-    logger_debug("Server init binding");
+    logger_debug("%s", "Server init binding");
 
     r = bind(sockfd, (struct sockaddr*)(&address), sin_size);
     
     if (r < 0) {
-        logger_error(strerror(errno));
+        logger_error("%s %s", "Error on bind: ", strerror(errno));
         fprintf(stderr, strerror(errno));
         exit(1);
     }
@@ -99,7 +99,7 @@ SERVER *server_init(char *hostname, int port) {
 
 CLIENT *server_find_client_by_hostname(SERVER *server, char *hostname) {
     char dmsg[100] = "Finding hostname: "; 
-    logger_debug(strncat(dmsg, hostname, 80));
+    logger_debug("%s %s", "Finding client ", hostname);
 
     CLIENT_LIST *client_list = server->clients;
     while (client_list != NULL) {
@@ -139,14 +139,14 @@ struct {
 
 void server_response(SERVER *server, CLIENT *client, int resp_code) {
     
-    logger_debug("Sending message...");
+    logger_debug("%s %s %s %d", "Replying to message to ", client->host, ":", client->port);
 
     if ( send(client->socket, &resp_code, sizeof(int), 0) == -1) {
-        logger.warning("Error when replying to user.");
+        logger.warning("%s %s %s %d", "Error when replying to ", client->host, ":", client->port);
         return ;
     }
     
-    logger_debug("Success on replying to user!");
+    logger_debug("%s %s %s %d", "Success on replying to ", client->host, ":", client->port);
 
 }
 
@@ -170,26 +170,26 @@ void *server_listen_client(void *args) {
 
             size = send(client->socket, tmp, strlen(tmp)*sizeof(char));
             if (size == -1) {
-                logger_error("Error when sending message to client.");
+                logger_error("%s %s", "Error when sending message to client: ", strerror(errno));
                 continue;
             }
             size = recv(client->socket, buffer, BUFFERSIZE, 0);
             if (size == -1) {
-                logger_error("Error when receiving a message.");
+                logger_error("%s %s", "Error when receiving a message: ", strerror(errno));
                 continue;
             }
-            logger.debug("Message received by client");
+            logger.debug("%s %s %s %d", "Message received by ", client->host, ":", client->port);
         }
 
         size = recv(client->socket, buffer, BUFFERSIZE, MSG_WAITALL); // may set MSG_WAITALL ?
         
         if (size == -1) {
-            logger_error("Error when receiving a message.");
+            logger_error("%s %s", "Error when receiving a message: ", strerror(errno));
             sleep(5);
             continue;
         }
 
-        logger.info("Message received from ");
+        logger.info("%s %s %s %d", "Message received from ", client->host, ":", client->port);
         
         resp_code = control_parse_msg(server, client, buffer);
         if (resp_code == -1) continue;
@@ -219,15 +219,13 @@ int server_connect_client(SERVER *server, char *addr, int cli_socket, int port) 
 
 void server_run(SERVER *server) {
     
-    logger_info("Server started with success!");
-    logger_info("Listening for connections... (Press CTRL+C to leave)\n");
+    logger_info("%s", "Server started with success!");
+    logger_info("%s", "Listening for connections... (Press CTRL+C to leave)\n");
     
     struct sockaddr_in address;
     int sin_size = sizeof(struct sockaddr);
     int client_socket, cli_port;
-    char msg_buffer[60] = "Received connection from ",
-         msg_error[100] = "Connection failed: ",
-         *cli_address;
+    char *cli_address;
 
     CLIENT *client = NULL;
 
@@ -238,15 +236,14 @@ void server_run(SERVER *server) {
         
         if (client_socket == -1) {
             strncat(msg_error, strerror(errno), 78);
-            logger_error(msg_error); 
+            logger_error("%s %s", "Connection failed: ", strerror(errno));
             continue;
         }
 
         cli_address = inet_ntoa(address.sin_addr);
         cli_port = ntohs(address.sin_port);
 
-        strncat(msg_buffer, cli_address, 30);
-        logger_info(msg_buffer);
+        logger_info("%s %s %s %d", "Received connection from ", cli_address, ":", cli_port);
 
         
         
