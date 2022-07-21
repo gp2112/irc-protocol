@@ -146,7 +146,7 @@ void inter_getIpPort(BUFFER *buffer, char *ip, int *port) {
 void print_messages(QUEUE *msg_rcvd, BUFFER *buffer, int *kill) {
     int x, y, msg_pos=2;
     char *msg;
-    char *pongMsg = (char *)malloc(256);
+    char msgToPrint[BUFF_SIZE];
 
     while(!(*kill)) {
         getmaxyx(stdscr, y, x);
@@ -154,13 +154,8 @@ void print_messages(QUEUE *msg_rcvd, BUFFER *buffer, int *kill) {
         while (!queue_empty(msg_rcvd)) {
             msg = queue_pop(msg_rcvd);
             if (msg[] == MSGSTART) {
-                if ( memcmp (++msg, PONG,) == PRIVMSG) {
-                    writeMsg("\tSERVIDOR : PONG", "", 0, &msg_pos);
-                }
-                else if (msg->command == PONG) {
-                    writeMsg(msg, "", 0, &msg_pos);
-                    // writeMsg(msg->content, msg->peer_ip, msg->peer_port, &msg_pos);
-                }
+                msgToPrint = handleRecivied(++msg);
+                writeMsg(msgToPrint, "", 0, &msg_pos);
             }
         }
 

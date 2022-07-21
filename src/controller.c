@@ -9,6 +9,7 @@
 #include "buffer.h"
 #include "controller.h"
 #include "msg.h"
+#include "errors.h"
 
 
 char *readUntilSpace (char *str, char C) {
@@ -151,4 +152,81 @@ void reparseMessage (char *inString) {
 	msg->nParams = nParams;
 
 	return msg;
+}
+
+void handleRecivied (char *msg) {
+	char output[BUFF_SIZE];
+
+	int returnCode = *((int *)msg);
+	switch (returnCode) {
+		case PONG:
+			strcpy(output, "\tSERVIDOR : PONG\0");
+			break;
+		case ERR_BANNEDFROMCHAN:
+			strcpy(output, ERR_BANNEDFROMCHAN_STR);
+			break;
+		case ERR_INVITEONLYCHAN:
+			strcpy(output, ERR_INVITEONLYCHAN_STR);
+			break;
+		case ERR_CHANNELISFULL:
+			strcpy(output, ERR_CHANNELISFULL_STR);
+			break;
+		case ERR_BADCHANNELKEY:
+			strcpy(output, ERR_BADCHANNELKEY_STR);
+			break;
+		case ERR_BADCHANMASK:
+			strcpy(output, ERR_BADCHANMASK_STR);
+			break;
+		case ERR_NOSUCHNICK:
+			strcpy(output, ERR_NOSUCHNICK_STR);
+			break;
+		case ERR_NOSUCHCHANNEL:
+			strcpy(output, ERR_NOSUCHCHANNEL_STR);
+			break;
+		case ERR_TOOMANYCHANNELS:
+			strcpy(output, ERR_TOOMANYCHANNELS_STR);
+			break;
+		case RPL_TOPIC:
+			strcpy(output, RPL_TOPIC_STR);
+			break;
+		case ERR_NOTONCHANNEL:
+			strcpy(output, ERR_NOTONCHANNEL_STR);
+			break;
+		case ERR_USERNOTINCHANNEL:
+			strcpy(output, ERR_USERNOTINCHANNEL_STR);
+			break;
+		case ERR_CHANOPRIVSNEEDED:
+			strcpy(output, ERR_CHANOPRIVSNEEDED_STR);
+			break;
+		case ERR_TOOMANYCHANNELS:
+			strcpy(output, ERR_TOOMANYCHANNELS_STR);
+			break;
+		case ERR_YOUREBANNEDCREEP:
+			strcpy(output, ERR_YOUREBANNEDCREEP_STR);
+			break;
+		case ERR_ALREADYREGISTRED:
+			strcpy(output, ERR_ALREADYREGISTRED_STR);
+			break;
+		case ERR_NOTREGISTERED:
+			strcpy(output, ERR_NOTREGISTERED_STR);
+			break;
+		case ERR_NOSUCHSERVER:
+			strcpy(output, ERR_NOSUCHSERVER_STR);
+			break;
+		case ERR_NOTEXTTOSEND:
+			strcpy(output, ERR_NOTEXTTOSEND_STR);
+			break;
+		case ERR_UNKNOWNCOMMAND:
+			strcpy(output, ERR_UNKNOWNCOMMAND_STR);
+			break;
+		case ERR_NOPRIVILEGES:
+			strcpy(output, ERR_NOPRIVILEGES_STR);
+			break;
+		
+	}
+    else if (msg->command == PONG) {
+		strcpy(output, msg);
+    }
+
+	return output;
 }
