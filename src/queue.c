@@ -12,7 +12,7 @@ typedef struct node_ NODE;
 
 struct node_ {
     NODE *next;
-    MSG *msg;
+    char *msg;
 };
 
 struct queue_ {
@@ -21,7 +21,7 @@ struct queue_ {
     char empty;
 };
 
-NODE *node_create(MSG *msg) {
+NODE *node_create(char *msg) {
     NODE *node = (NODE*)malloc(sizeof(NODE));
     if (node==NULL) {
         seterr(ENOMEM);
@@ -53,7 +53,7 @@ char queue_empty(QUEUE *q) {
     return q->empty;
 }
 
-char queue_insert(QUEUE *q, MSG *msg) {
+char queue_insert(QUEUE *q, char *msg) {
     if (q->empty) {
         q->head = node_create(msg);
         q->end = q->head;
@@ -70,7 +70,7 @@ char queue_insert(QUEUE *q, MSG *msg) {
     return 0;
 }
 
-MSG *queue_pop(QUEUE *q) {
+char *queue_pop(QUEUE *q) {
     if (q->empty) {
         seterr(EADDRNOTAVAIL);
         return NULL;
@@ -82,7 +82,7 @@ MSG *queue_pop(QUEUE *q) {
 
     if (q->head==NULL)
         q->empty = 1;
-    MSG *msg = n->msg;
+    char *msg = n->msg;
     free(n);
     return msg;
 }
@@ -92,10 +92,9 @@ char queue_delete(QUEUE **q) {
         seterr(EADDRNOTAVAIL);
         return -1;
     }
-    MSG *msg; 
+    char *msg; 
     while (!(*q)->empty) {
         msg = queue_pop(*q);
-        free(msg->content);
         free(msg);
     }
     
