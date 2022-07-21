@@ -1,45 +1,10 @@
-int connectServer(struct sockaddr_in *address, int sockfd, char *ip, int port) {
-
-    
-    struct sockaddr_in serv_addr;
-    
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(port);
-
-    inet_pton(AF_INET, ip, &serv_addr.sin_addr);
-
-    int server_fd = connect(sockfd, (struct sockaddr*)&serv_addr, 
-                                        sizeof(serv_addr));
-
-    if (server_fd < 0) {
-        fprintf(stderr, strerror(errno));
-        return -1;
-    } 
-
-    return server_fd;
-}
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <errno.h>
 
 
-int serve(struct sockaddr_in *address, char *ip, int port) {
-    
-    address->sin_family = AF_INET;
-    address->sin_port = htons(port);
-    address->sin_addr.s_addr = INADDR_ANY;
-
-    int r, sockfd = socket(PF_INET, SOCK_STREAM, 0),
-           sin_size = sizeof(struct sockaddr);
-
-    r = bind(sockfd, (struct sockaddr*)(address), sin_size);
-    
-    if (r < 0) {
-        fprintf(stderr, strerror(errno));
-        exit(1);
-    }
-
-    listen(sockfd, 10);
-
-    return sockfd;
-}
 
 void *sendMsg(void *args) {
     struct listen_args *largs = (struct listen_args*)args;
