@@ -1,8 +1,7 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#define MAX_CLIENT_NAME 20
-
+#include "params.h"
 #include "queue.h"
 
 typedef struct channel_ CHANNEL;
@@ -13,6 +12,7 @@ typedef struct client_ {
     int socket;
     int port;
     pthread_t *conn_thread;
+    // char *current_channel;
     CHANNEL *current_channel;
     QUEUE *out_queue;
 } CLIENT;

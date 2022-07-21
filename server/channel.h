@@ -3,9 +3,7 @@
 
 
 #include "client.h"
-
-#define MAX_CHANNEL_NAME 56
-#define BUFFERSIZE 255
+#include "params.h"
 
 char channel_is_banned(CHANNEL *ch, CLIENT *client);
 char channel_is_invited(CHANNEL *ch, CLIENT *client);

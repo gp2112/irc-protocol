@@ -1,6 +1,8 @@
 #ifndef LOG_H
 #define LOG_H
 
+#include "params.h"
+
 /* 
  logging levels
  
@@ -28,10 +30,10 @@
 
 #define ALL 0xffffffff
 
-void logger_error(char *msg);
-void logger_warning(char *msg);
-void logger_info(char *msg);
-void logger_debug(char *msg);
+void logger_info(char *fmt, ...);
+void logger_error(char *fmt, ...);
+void logger_warning(char *fmt, ...);
+void logger_debug(char *fmt, ...);
 void logger_setmode(int mode);
 
 #endif

@@ -3,7 +3,8 @@
 
 #include "client.h"
 #include "channel.h"
-#define BUFFERSIZE 255
+#include "params.h"
+
 typedef struct server_ SERVER;
 
 SERVER *server_init(char *hostname, int port);
