@@ -14,7 +14,6 @@
 #include "server.h"
 #include "errors.h"
 #include "logger.h"
-#include "flags.h"
 #include "queue.h"
 #include "controller.h"
 
@@ -43,6 +42,7 @@ struct server_ {
     int n_clients;
     int n_channels;
     int sockfd;
+    char *stop_server;
 };
 
 CLIENT_LIST *client_list_append(CLIENT_LIST *clients, CLIENT *client) {
@@ -61,9 +61,9 @@ CHANNEL_LIST *channel_list_append(CHANNEL_LIST *channels, CHANNEL *channel) {
     return new_channels;
 }
 
-SERVER *server_init(char *hostname, int port) {
+SERVER *server_init(char *hostname, int port, char *stop_server) {
     
-    logger_debug("%s", "Server init");
+    logger_info("%s %s %s %d", "Starting server ", hostname, " on port", port);
 
     SERVER *server = (SERVER *)malloc(sizeof(SERVER));
     server->hostname = (char*)malloc((strlen(hostname)+1)*sizeof(char));
@@ -71,9 +71,12 @@ SERVER *server_init(char *hostname, int port) {
     server->channels = NULL;
     server->n_clients = 0; 
     server->n_channels=0;
+    server->stop_server = stop_server;
 
     struct sockaddr_in address;
     
+    strcpy(server->hostname, hostname);
+
     address.sin_family = AF_INET;
     address.sin_port = htons(port);
     address.sin_addr.s_addr = INADDR_ANY;
@@ -87,7 +90,6 @@ SERVER *server_init(char *hostname, int port) {
     
     if (r < 0) {
         logger_error("%s %s", "Error on bind: ", strerror(errno));
-        fprintf(stderr, strerror(errno));
         exit(1);
     }
 
@@ -99,7 +101,7 @@ SERVER *server_init(char *hostname, int port) {
 }
 
 CLIENT *server_find_client_by_hostname(SERVER *server, char *hostname) {
-    char dmsg[100] = "Finding hostname: "; 
+
     logger_debug("%s %s", "Finding client ", hostname);
 
     CLIENT_LIST *client_list = server->clients;
@@ -124,10 +126,19 @@ CHANNEL *server_find_channel_by_name(SERVER *server, char *name) {
 
 
 int server_create_channel(SERVER *server, CLIENT *client, char *name) {
-    if (server == NULL) return -1;
+    if (server == NULL) {
+        logger_error("%s", "PANIC: server is NULL");
+        exit(1);
+    }
+    if (client == NULL) {
+        logger_warning("%s", "PANIC: Client is NULL");
+        exit(1);
+    }
+
+    logger_debug("%s %s", "Creating channel ", name);
 
     CHANNEL *channel = channel_create(client, name, 0, 100);
-    client->current_channel = channel;
+    client->current_channel = name;
     server->channels = channel_list_append(server->channels, channel);
     
     return 0;
@@ -142,7 +153,7 @@ struct {
 
 void server_response(SERVER *server, CLIENT *client, int resp_code) {
     
-    logger_debug("%s %s %s %d", "Replying to message to ", client->host, ":", client->port);
+    logger_debug("%s %s %s %d", "Replying to message from ", client->host, ":", client->port);
 
     if ( send(client->socket, &resp_code, sizeof(int), 0) == -1) {
         logger_warning("Error when replying to user.");
@@ -159,6 +170,8 @@ void *server_listen_client(void *args) {
     CLIENT *client = sc->client;
     SERVER *server = sc->server;
 
+    free(sc);
+
     int resp_code;
 
     char buffer[BUFFERSIZE];
@@ -166,7 +179,7 @@ void *server_listen_client(void *args) {
 
     ssize_t size;
 
-    while (!stop_server) {
+    while (! *server->stop_server) {
 
         while (!queue_empty(client->out_queue)) {
             tmp = queue_pop(client->out_queue);
@@ -183,22 +196,25 @@ void *server_listen_client(void *args) {
             }
             logger_debug("Message received by client");
         }
-
-        size = recv(client->socket, buffer, BUFFERSIZE, MSG_WAITALL); // may set MSG_WAITALL ?
         
+        size = recv(client->socket, buffer, BUFFERSIZE, 0);
+
         if (size == -1) {
             logger_error("%s %s", "Error when receiving a message: ", strerror(errno));
             sleep(5);
             continue;
         }
+        if (size == 0) continue;
 
-        logger_info("%s", "Message received from ", client->host);
+        logger_info("%s %d %s, %s", "Message", *buffer,"received from ", client->host);
         
         resp_code = control_parse_msg(server, client, buffer);
         if (resp_code == -1) continue; // does not need response: already replyed
 
         server_response(server, client, resp_code);
     }
+
+    pthread_exit(NULL);
    
     return NULL;
 
@@ -206,7 +222,7 @@ void *server_listen_client(void *args) {
 
 int server_connect_client(SERVER *server, char *addr, int cli_socket, int port) {
     
-    logger.debug("%s %s %s", "Creating and connecting ", addr," to server...");
+    logger_debug("%s %s %s", "Creating and connecting ", addr," to server...");
 
     pthread_t thread_id;
 
@@ -218,15 +234,13 @@ int server_connect_client(SERVER *server, char *addr, int cli_socket, int port) 
     server->clients = client_list_append(server->clients, client);
 
     pthread_create(&thread_id, NULL, server_listen_client, (void *)sc);
+    pthread_detach(thread_id);
+
     return 0;
 }
 
-
-void server_run(SERVER *server) {
-    
-    logger_info("%s", "Server started with success!");
-    logger_info("%s", "Listening for connections... (Press CTRL+C to leave)\n");
-    
+void *async_server_run(void *s) {
+    SERVER *server = (SERVER *)s;
     struct sockaddr_in address;
     int sin_size = sizeof(struct sockaddr);
     int client_socket, cli_port;
@@ -235,7 +249,8 @@ void server_run(SERVER *server) {
     CLIENT *client = NULL;
 
     // runs until ctrl+c signal (sigint)
-    while (!stop_server) {
+
+    while (! *server->stop_server) {
         client_socket = accept(server->sockfd, 
                                 (struct sockaddr*)&address, &sin_size);
         
@@ -249,12 +264,23 @@ void server_run(SERVER *server) {
 
         logger_info("%s %s %s %d", "Received connection from ", cli_address, ":", cli_port);
 
-        
-        
+        server_connect_client(server, cli_address, client_socket, cli_port);
+
     }
 
+    return NULL;
+}
 
-};
+void server_run(SERVER *server) { 
+    
+    pthread_t thread_id;
+
+    pthread_create(&thread_id, NULL, async_server_run, (void *)server);
+
+    pthread_detach(thread_id);
+
+    while (! *server->stop_server);
+}
 
 int server_client_join_channel(SERVER *server, CLIENT *client, char *channel_name) {
     logger_info("%s %s %s", client->host, " joining #", channel_name);
@@ -270,10 +296,13 @@ int server_client_join_channel(SERVER *server, CLIENT *client, char *channel_nam
 void list_clients_delete(CLIENT_LIST **clients) {
     logger_debug("%s", "Deleting client list...");
 
-    CLIENT_LIST *tmp = *clients;
+    CLIENT_LIST *tmp = *clients, *tmp2 = NULL;
+
     while (tmp != NULL) {
-        client_delete(&clients->client);
-        clients = clients->next;
+        client_delete(&tmp->client);
+        tmp2 = tmp->next;
+        free(clients);
+        tmp = tmp2;
     }
 
     *clients = NULL;
@@ -283,21 +312,29 @@ void list_channels_delete(CHANNEL_LIST **channels) {
 
     logger_debug("%s", "Deleting channel list...");
 
-    CHANNEL_LIST *tmp = *channels;
+    CHANNEL_LIST *tmp = *channels, *tmp2 = NULL;
+
     while (tmp != NULL) {
-        channel_delete(&channels->channel);
-        channels = channels->next;
+        channel_delete(&tmp->channel);
+        tmp2 = tmp->next;
+        free(channels);
+        tmp2 = tmp;
     }
     *channels = NULL;
 }
 
+
+
 void server_delete(SERVER **server) {
-    logger_debug("%s %d", "Deleting server...", *server);
+    logger_debug("%s", "Deleting server...");
+    close((*server)->sockfd);
 
     if (*server==NULL) {
         logger_debug("%s", "Server already NULL");
         return ;
     }
-    list_clients_delete(&server->clients);
+    list_channels_delete(&(*server)->channels);
+    list_clients_delete(&(*server)->clients);
 
+    
 }

@@ -1,7 +1,7 @@
 
 CC = gcc
 SRC = ./src
-DEPS = ./server/channel.c ./server/client.c ./server/controller.c ./server/datetime.c ./server/logger.c ./server/queue.c ./server/server.c ./server/signalhandler.c ./server/main.c
+DEPS = ./server/channel.c ./server/client.c ./server/controller.c ./server/datetime.c ./server/logger.c ./server/queue.c ./server/server.c ./server/main.c
 
 FLAGS = -g
 LIBS = -lpthread
@@ -12,7 +12,7 @@ all:
 	make client
 
 serv:
-	$(CC) $(DEPS) $(FLAGS) $(LIBS) -o server2
+	$(CC) $(DEPS) $(FLAGS) $(LIBS) -o server2 -g
 
 client:
 	$(CC) $(SRC)/client.c $(DEPS) $(FLAGS) $(LIBS) -o client

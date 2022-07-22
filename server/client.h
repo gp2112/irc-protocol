@@ -12,8 +12,7 @@ typedef struct client_ {
     int socket;
     int port;
     pthread_t *conn_thread;
-    // char *current_channel;
-    CHANNEL *current_channel;
+    char *current_channel;
     QUEUE *out_queue;
 } CLIENT;
 
@@ -21,5 +20,7 @@ typedef struct client_ {
 
 CLIENT *client_create(char *nick, char *hostname, int client_socket, 
                                                 int port, pthread_t *conn);
+
+void client_delete(CLIENT **client);
 
 #endif

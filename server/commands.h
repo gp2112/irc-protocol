@@ -9,7 +9,7 @@
 
 // receive
 
-#define PING        0b0001000
+#define PING        'a' //0b0001000
 #define NICKNAME    0b0001001
 #define JOIN        0b0001010
 #define KICK        0b0001011
@@ -22,7 +22,7 @@
 
 // response
 
-#define PONG ~PING
+#define PONG 'b'//~PING
 
 
 

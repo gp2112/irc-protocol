@@ -22,7 +22,7 @@ void logger_debug(char *fmt, ...) {
     char c;
     char *s;
 
-    printf("\033[1;32m[ %s ] ", dt_string);
+    printf("\033[1;32m[ %s ] DEBUG: ", dt_string);
  
     va_start(ap, fmt);
     while (*fmt)

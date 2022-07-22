@@ -3,6 +3,7 @@
 
 #include "channel.h"
 #include "errors.h"
+#include "logger.h"
 
 
 typedef struct list_ LIST;
@@ -185,6 +186,14 @@ int channel_kick(CHANNEL *ch, CLIENT *client_by, CLIENT *client_to) {
 }
 
 void channel_delete(CHANNEL **ch) {
+    
+    if (*ch == NULL) {
+        logger_warning("%s", "Channel already NULLED!");
+        return ;
+    }
+
+    logger_debug("%s", "Deleting channel #", (*ch)->name);
+
     if (*ch == NULL) return ;
 
     free((*ch)->name);

@@ -18,5 +18,6 @@ char channel_client_is_muted(CHANNEL *channel, CLIENT *client);
 void channel_client_mute(CHANNEL *channel, CLIENT *client);
 void channel_client_unmute(CHANNEL *channel, CLIENT *client);
 char *channel_name(CHANNEL *channel);
+void channel_delete(CHANNEL **ch);
 
 #endif

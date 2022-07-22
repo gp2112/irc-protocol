@@ -16,6 +16,7 @@
 
 #include "client.h"
 #include "queue.h"
+#include "logger.h"
 
 
 
@@ -35,10 +36,29 @@ CLIENT *client_create(char *nick, char *hostname, int client_socket,
     client->port = port;
     client->socket = client_socket;
     client->conn_thread = conn;
-    // client->current_channel = (char *)calloc(MAX_CHANNEL_NAME, sizeof(char));
-    client->current_channel = NULL;
+    client->current_channel = (char *)calloc(MAX_CHANNEL_NAME, sizeof(char));
+    
     client->out_queue = queue_create();
 
     return client;
 
+}
+
+void client_delete(CLIENT **client) {
+    if (*client == NULL) {
+        logger_warning("%s", "Client already NULLED..");
+        return ;
+    }
+    logger_debug("%s %s %s", "Deleting client ", (*client)->host, "...");
+    free((*client)->host);
+    free((*client)->nick);
+
+    queue_delete(&(*client)->out_queue);
+
+    free((*client)->current_channel);
+
+    free(*client);
+    *client = NULL;
+
+    logger_debug("%s %s", "Successfuly deleted ", (*client)->host);
 }

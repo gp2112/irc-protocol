@@ -10,6 +10,7 @@
 #include "logger.h"
 
 
+
 int cmd_join(SERVER *server, CLIENT *client, char *buffer) {
     char name[MAX_CHANNEL_NAME]; int i=0;
     while (buffer[i] != MSGEND && i < MAX_CHANNEL_NAME)
@@ -23,7 +24,7 @@ int cmd_join(SERVER *server, CLIENT *client, char *buffer) {
     }
 
     channel_join(channel, client);
-    client->current_channel = channel;
+    client->current_channel = channel_name(channel);
     return 0;
 }
 
@@ -45,7 +46,13 @@ int cmd_nickname(SERVER *server, CLIENT *client, char *buffer) {
 }
 
 int cmd_kick(SERVER *server, CLIENT *client, char *buffer) {
-    if (client->host != channel_mod(client->current_channel)->host)
+    CHANNEL *
+    client_channel = server_find_channel_by_name(server, client->current_channel);
+
+    if (client_channel == NULL)
+        return ERR_NOSUCHCHANNEL;
+
+    if (client->host != channel_mod(client_channel)->host)
         return ERR_NOPRIVILEGES;
 
     char name[MAX_CLIENT_NAME]; int i=0;
@@ -54,15 +61,20 @@ int cmd_kick(SERVER *server, CLIENT *client, char *buffer) {
 
     name[i] = '\0';
 
-    CLIENT *kicked_client = channel_find_client(client->current_channel, name);
+    CLIENT *kicked_client = channel_find_client(client_channel, name);
     if (kicked_client == NULL)
         return ERR_USERNOTINCHANNEL;
-    channel_kick(client->current_channel, client, kicked_client);
+
+    channel_kick(client_channel, client, kicked_client);
     return 0;
 }
 
 int cmd_mute(SERVER *server, CLIENT *client, char *buffer, char mute) {
-    if (client != channel_mod(client->current_channel))
+
+    CHANNEL *
+    client_channel = server_find_channel_by_name(server, client->current_channel);
+
+    if (client != channel_mod(client_channel))
         return ERR_NOPRIVILEGES;
 
     char name[MAX_CLIENT_NAME]; int i=0;
@@ -71,20 +83,26 @@ int cmd_mute(SERVER *server, CLIENT *client, char *buffer, char mute) {
 
     name[i] = '\0';
     
-    CLIENT *muted_client = channel_find_client(client->current_channel, name);
+    CLIENT *muted_client = channel_find_client(client_channel, name);
     if (muted_client == NULL)
         return ERR_USERNOTINCHANNEL;
 
     if (mute)
-        channel_client_mute(client->current_channel, muted_client);
+        channel_client_mute(client_channel, muted_client);
     else
-        channel_client_unmute(client->current_channel, muted_client);
+        channel_client_unmute(client_channel, muted_client);
 
     return 0;
 }
 
 int cmd_whois(SERVER *server, CLIENT *client, char *buffer) {
-    if (client != channel_mod(client->current_channel))
+
+    CHANNEL *
+    client_channel = server_find_channel_by_name(server, client->current_channel);
+
+    logger_info("%s", client->host, "#", client_channel, "WHOIS command");
+
+    if (client != channel_mod(client_channel))
         return ERR_NOPRIVILEGES;
 
     char name[MAX_CLIENT_NAME]; int i=0;
@@ -93,13 +111,13 @@ int cmd_whois(SERVER *server, CLIENT *client, char *buffer) {
 
     name[i] = '\0';
 
-    CLIENT *whois_client = channel_find_client(client->current_channel, name);
+    CLIENT *whois_client = channel_find_client(client_channel, name);
     if (whois_client == NULL)
         return ERR_USERNOTINCHANNEL;
 
     int r = send(client->socket, client->host, strlen(client->host)*sizeof(char), 0);
     if (r == -1) {
-        logger_error("Failed to reply client.");
+        logger_warning("%s %s", "Failed to reply ", client->host);
     }
 
     return -1;

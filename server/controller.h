@@ -6,4 +6,5 @@
 
 int control_parse_msg(SERVER *server, CLIENT *client, char *buffer);
 
+
 #endif
