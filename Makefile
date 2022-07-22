@@ -1,18 +1,18 @@
 
 CC = gcc
 SRC = ./src
-DEPS = $(SRC)/queue.c $(SRC)/irc.c $(SRC)/buffer.c $(SRC)/interface.c
+DEPS = ./server/channel.c ./server/client.c ./server/controller.c ./server/datetime.c ./server/logger.c ./server/queue.c ./server/server.c ./server/main.c
 
 FLAGS = -g
-LIBS = -lncurses -lpthread
+LIBS = -lpthread
 
 all:
 	make clear
 	make server
 	make client
 
-server:
-	$(CC) $(SRC)/server.c $(DEPS) $(FLAGS) $(LIBS) -o server
+serv:
+	$(CC) $(DEPS) $(FLAGS) $(LIBS) -o server2 -g
 
 client:
 	$(CC) $(SRC)/client.c $(DEPS) $(FLAGS) $(LIBS) -o client
