@@ -123,6 +123,7 @@ char *recvParse(char *input, char *is_reply) {
             finalMsg[i] = input[i++];
         }
         finalMsg[i] = '\0';
+        mvprintw(30, 30, finalMsg);
         return finalMsg;
     }
 

@@ -1,9 +1,11 @@
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 
 #include "channel.h"
 #include "errors.h"
 #include "logger.h"
+#include "commands.h"
 
 
 typedef struct list_ LIST;
@@ -73,18 +75,35 @@ void channel_transmit_message(CHANNEL *channel, CLIENT *sender, char *text) {
     if (nick == NULL)
         nick = sender->host;
 
-    strncpy(buffer, nick, MAX_CLIENT_NAME);
-    char *next = buffer + strlen(nick);
-    strncpy(next, " : ", 3); next += 3;
-    strncpy(next, text, BUFFERSIZE-strlen(nick)-4);
+    const int msgstart = MSGSTART;
+    const int msgend = MSGEND;
+    memcpy(buffer, &msgstart, sizeof(int));
 
+    strncpy(buffer+sizeof(int), nick, MAX_CLIENT_NAME);
+    char *next = buffer+sizeof(int) + strlen(nick);
+    strncpy(next, " : ", 3); next += 3;
+    strncpy(next, text, BUFFERSIZE-strlen(nick)-4-sizeof(int));
+
+    next += strlen(text);
+
+    memcpy(next, &msgend, sizeof(int)); next += sizeof(int);
+
+    
+    int resp, size;
 
     while (l != NULL) {
         if (l->client != sender) {
-       
+            
             logger_debug("%s %s", "Sending to ", l->client->host);
+            size = send(l->client->socket, buffer, next-buffer, 0);
+            if (size == -1) {
+                logger_warning("%s", "Error when sending message");
+                continue;
+            }
 
-            queue_insert(l->client->out_queue, buffer);
+            recv(l->client->socket, &resp, sizeof(int), 0);
+            logger_debug("%s %d", "Client replyed with: ", resp);
+
         }
 
         l = l->next;

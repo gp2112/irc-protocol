@@ -52,7 +52,7 @@ int cmd_kick(SERVER *server, CLIENT *client, char *buffer) {
     if (client_channel == NULL)
         return ERR_NOSUCHCHANNEL;
 
-    if (client->host != channel_mod(client_channel)->host)
+    if (client != channel_mod(client_channel))
         return ERR_NOPRIVILEGES;
 
     char name[MAX_CLIENT_NAME]; int i=0;
