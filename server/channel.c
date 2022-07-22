@@ -81,8 +81,8 @@ void channel_transmit_message(CHANNEL *channel, CLIENT *sender, char *text) {
 
     strncpy(buffer+sizeof(int), nick, MAX_CLIENT_NAME);
     char *next = buffer+sizeof(int) + strlen(nick);
-    strncpy(next, " : ", 3); next += 3;
-    strncpy(next, text, BUFFERSIZE-strlen(nick)-4-sizeof(int));
+    strcpy(next, " : "); next += 3;
+    strcpy(next, text);
 
     next += strlen(text);
 
@@ -94,7 +94,7 @@ void channel_transmit_message(CHANNEL *channel, CLIENT *sender, char *text) {
     while (l != NULL) {
         if (l->client != sender) {
             
-            logger_debug("%s %s", "Sending to ", l->client->host);
+            logger_debug("%s %s %s %s", "Sending ", text," to ", l->client->host);
             size = send(l->client->socket, buffer, next-buffer, 0);
             if (size == -1) {
                 logger_warning("%s", "Error when sending message");

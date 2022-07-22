@@ -181,24 +181,8 @@ void *server_listen_client(void *args) {
     ssize_t size;
 
     while (! *server->stop_server) {
-        /*
-        while (!queue_empty(client->out_queue)) {
-            tmp = queue_pop(client->out_queue);
-            logger_debug("%s %s %s %s", "Sending ", tmp, " to ", client->host);
 
-            
-            if (size == -1) {
-                logger_error("%s %s", "Error when sending message to client: ", strerror(errno));
-                continue;
-            }
-            size = recv(client->socket, buffer, BUFFERSIZE, 0);
-            if (size == -1) {
-                logger_error("%s %s", "Error when receiving a message: ", strerror(errno));
-                continue;
-            }
-            logger_debug("Message received by client");
-        }*/
-        
+                
         size = recv(client->socket, buffer, BUFFERSIZE, 0);
 
         if (size == -1) {

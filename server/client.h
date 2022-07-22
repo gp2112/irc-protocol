@@ -13,7 +13,6 @@ typedef struct client_ {
     int port;
     pthread_t *conn_thread;
     char *current_channel;
-    QUEUE *out_queue;
 } CLIENT;
 
 #include "channel.h"

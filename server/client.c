@@ -40,8 +40,6 @@ CLIENT *client_create(char *nick, char *hostname, int client_socket,
     client->conn_thread = conn;
     client->current_channel = (char *)calloc(MAX_CHANNEL_NAME, sizeof(char));
     
-    client->out_queue = queue_create();
-
     return client;
 
 }
