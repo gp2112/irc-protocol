@@ -1,14 +1,7 @@
 #include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-
-#include "channel.h"
 #include "controller.h"
 #include "commands.h"
 #include "errors.h"
-#include "logger.h"
-
 
 
 int cmd_join(SERVER *server, CLIENT *client, char *buffer) {
@@ -24,7 +17,7 @@ int cmd_join(SERVER *server, CLIENT *client, char *buffer) {
     }
 
     channel_join(channel, client);
-    client->current_channel = channel_name(channel);
+    client->current_channel = channel;
     return 0;
 }
 
@@ -35,10 +28,10 @@ int cmd_nickname(SERVER *server, CLIENT *client, char *buffer) {
 
     name[i] = '\0';
 
-    if (client->nick == NULL)
-        client->nick = (char*)malloc(MAX_CLIENT_NAME*sizeof(char));
+    if (client->name == NULL)
+        client->name = (char*)malloc(MAX_CLIENT_NAME*sizeof(char));
 
-    strncpy(client->nick, name, MAX_CLIENT_NAME);
+    strncpy(client->name, name, MAX_CLIENT_NAME);
 
 
     return 0;
@@ -46,13 +39,7 @@ int cmd_nickname(SERVER *server, CLIENT *client, char *buffer) {
 }
 
 int cmd_kick(SERVER *server, CLIENT *client, char *buffer) {
-    CHANNEL *
-    client_channel = server_find_channel_by_name(server, client->current_channel);
-
-    if (client_channel == NULL)
-        return ERR_NOSUCHCHANNEL;
-
-    if (client->host != channel_mod(client_channel)->host)
+    if (client != channel_mod(client->current_channel))
         return ERR_NOPRIVILEGES;
 
     char name[MAX_CLIENT_NAME]; int i=0;
@@ -61,20 +48,15 @@ int cmd_kick(SERVER *server, CLIENT *client, char *buffer) {
 
     name[i] = '\0';
 
-    CLIENT *kicked_client = channel_find_client(client_channel, name);
+    CLIENT *kicked_client = channel_find_client(client->current_channel, name);
     if (kicked_client == NULL)
         return ERR_USERNOTINCHANNEL;
-
-    channel_kick(client_channel, client, kicked_client);
+    channel_remove_client(client->current_channel, kicked_client);
     return 0;
 }
 
 int cmd_mute(SERVER *server, CLIENT *client, char *buffer, char mute) {
-
-    CHANNEL *
-    client_channel = server_find_channel_by_name(server, client->current_channel);
-
-    if (client != channel_mod(client_channel))
+    if (client != channel_mod(client->current_channel))
         return ERR_NOPRIVILEGES;
 
     char name[MAX_CLIENT_NAME]; int i=0;
@@ -83,26 +65,20 @@ int cmd_mute(SERVER *server, CLIENT *client, char *buffer, char mute) {
 
     name[i] = '\0';
     
-    CLIENT *muted_client = channel_find_client(client_channel, name);
+    CLIENT *muted_client = channel_find_client(client->current_channel, name);
     if (muted_client == NULL)
         return ERR_USERNOTINCHANNEL;
 
     if (mute)
-        channel_client_mute(client_channel, muted_client);
+        channel_client_mute(client->current_channel, muted_client);
     else
-        channel_client_unmute(client_channel, muted_client);
+        channel_client_unmute(client->current_channel, muted_client);
 
     return 0;
 }
 
 int cmd_whois(SERVER *server, CLIENT *client, char *buffer) {
-
-    CHANNEL *
-    client_channel = server_find_channel_by_name(server, client->current_channel);
-
-    logger_info("%s", client->host, "#", client_channel, "WHOIS command");
-
-    if (client != channel_mod(client_channel))
+    if (client != channel_mod(client->current_channel))
         return ERR_NOPRIVILEGES;
 
     char name[MAX_CLIENT_NAME]; int i=0;
@@ -111,13 +87,13 @@ int cmd_whois(SERVER *server, CLIENT *client, char *buffer) {
 
     name[i] = '\0';
 
-    CLIENT *whois_client = channel_find_client(client_channel, name);
-    if (whois_client == NULL)
+    CLIENT *whois_client = channel_find_client(client->current_channel, name);
+    if (whois_client === NULL)
         return ERR_USERNOTINCHANNEL;
 
-    int r = send(client->socket, client->host, strlen(client->host)*sizeof(char), 0);
+    int r = send(client->socket, client->host, strlen(client->host)*sizeof(char));
     if (r == -1) {
-        logger_warning("%s %s", "Failed to reply ", client->host);
+        logger_error("%s %s %s %d", "Failed to ", client->host, ":", client->port);
     }
 
     return -1;
@@ -136,7 +112,7 @@ int control_parse_msg(SERVER *server, CLIENT *client, char *buffer) {
         case NICKNAME:
             return cmd_nickname(server, client, buffer);
     
-        case PING:
+        case PING;
             return PONG;
 
         case KICK:
