@@ -15,7 +15,6 @@
 #include <string.h>
 
 #include "client.h"
-#include "queue.h"
 #include "logger.h"
 
 
@@ -52,8 +51,6 @@ void client_delete(CLIENT **client) {
     logger_debug("%s %s %s", "Deleting client ", (*client)->host, "...");
     free((*client)->host);
     free((*client)->nick);
-
-    queue_delete(&(*client)->out_queue);
 
     free((*client)->current_channel);
 

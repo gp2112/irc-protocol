@@ -2,7 +2,6 @@
 #define CLIENT_H
 
 #include "params.h"
-#include "queue.h"
 
 typedef struct channel_ CHANNEL;
 

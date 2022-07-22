@@ -14,7 +14,6 @@
 #include "server.h"
 #include "errors.h"
 #include "logger.h"
-#include "queue.h"
 #include "controller.h"
 
 
