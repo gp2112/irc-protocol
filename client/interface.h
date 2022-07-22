@@ -9,6 +9,6 @@ int read_input(BUFFER *buffer, int n);
 void inter_getIpPort(BUFFER *buffer, char *ip, int *port);
 void print_messages(QUEUE *msg_rcvd, BUFFER *buffer, int *kill);
 void interface_close();
-void writeMsg(char *msg, char *usr, int port, int *y);
+void writeMsg(char *msg, int *y);
 
 #endif

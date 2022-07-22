@@ -12,10 +12,10 @@ all:
 	make client
 
 serv:
-	$(CC) $(DEPS) $(FLAGS) $(LIBS) -o server2 -g
+	$(CC) ./server/*.c $(FLAGS) $(LIBS) -o server2
 
-client:
-	$(CC) $(SRC)/client.c $(DEPS) $(FLAGS) $(LIBS) -o client
+cli:
+	$(CC) ./client/*.c $(FLAGS) $(LIBS) -lncurses -o clirc
 
 clear:
 ifneq (,$(wildcard server))

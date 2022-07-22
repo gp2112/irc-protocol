@@ -23,8 +23,8 @@ struct listen_args {
 };
 
 
-void *listenMsgs(void *args);
-int serve(struct sockaddr_in *address, char *ip, int port);
 void *sendMsg(void *args);
 int connectServer(struct sockaddr_in *address, int sockfd, char *ip, int port);
+void *listenMsgs(void *args);
+
 #endif

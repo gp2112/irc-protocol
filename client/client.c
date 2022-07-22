@@ -11,7 +11,7 @@
 #include "irc.h"
 #include "interface.h"
 
-
+#define SA struct sockaddr
 
 int main(int argc, char *argv[]) {
 
@@ -28,12 +28,24 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in address;
 
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    int server_fd = connectServer(&address, sockfd, ip, port);
-
-    if (server_fd < 0) {
-        printw(strerror(errno));
+    if (sockfd == -1) {
+        printf("Socket failed to create: %s\n", strerror(errno));
         return 1;
-    }   
+    }
+
+    struct sockaddr_in servaddr;
+    
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = inet_addr(ip);
+    servaddr.sin_port = htons(port);
+
+    if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) == -1) {
+        printw("Fail to connect to server :(");
+        return 1;
+    }
+
+
+    
     
     int mutex = 0, kill=0;
 

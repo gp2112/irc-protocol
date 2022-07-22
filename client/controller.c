@@ -8,225 +8,158 @@
 #include "irc.h"
 #include "buffer.h"
 #include "controller.h"
-#include "msg.h"
+#include "commands.h"
 #include "errors.h"
 
 
-char *readUntilSpace (char *str, char C) {
-	char output = (char *) malloc(BUFF_SIZE);
+char *readUntilC (char *str, char C) {
+        char *output = (char *) malloc(BUFF_SIZE);
 
-	int i = 0;
-	char c = str[i];
+        int i = 0;
+        char c = str[i];
 
-	while (c != "\n" && c != C) {
-		output[i++] = c;
-		c = str[i];
-	}
+        while (c != '\n' && c != C) {
+                output[i++] = c;
+                c = str[i];
+        }
 
-	output[i] = "\0";
+        output[i] = '\0';
 
-	output = (char *) realloc (output, i+1);
+        output = (char *) realloc (output, i+1);
 
-	// Mudando a posicao da str
-	str = str+i;
+        // Mudando a posicao da str
+        str = str+i;
 
-	return output;
+        return output;
 }
 
-BUFFER *quitCommand (char *params) {
-	char **paramsArr = (*char)[1];
-	// param: quit message
-	paramsArr[0] = readUntilSpace(params);
+int parseMesage (char **b, char *input) {
+        
+        char *param, *buffer;
+        int command;
 
-	BUFFER *msg = cirarMsg (QUIT, paramsArr, 1);
+        char cmd_err[] = "Invalid command."; 
 
-	return msg;
-}
+        if (input[0] == '/') {
+                // É um comando
 
-BUFFER *pingCommand (char *params) {
-	char **paramsArr = (*char)[1];
-	// param: server1 => server who is sending the PING
-	paramsArr[0] = readUntilSpace(params);
+                input++;
 
-	BUFFER *msg = cirarMsg (QUIT, paramsArr, 1);
+                if (strncmp(input, "quit", 4)) {
+                    command = QUIT;
+                }
+                else if (strncmp(input, "ping", 4)) {
+                    command = PING;
+                }
+                else if (strncmp(input, "connect", 8)) {
+                    command = CONNECT;
+                    param = input+7;
+                }
+                else if (strncmp(input, "join", 4)) {
+                    command = JOIN;
+                    param = input+5;
+                }
+                else if (strncmp(input, "nickname", 8)) {
+                    command = NICKNAME;
+                    param = input+8;
+                }
+                else if (strncmp(input, "kick", 4)) {
+                    command = KICK;
+                    param = input+4;
+                }
+                else if (strncmp(input, "mute", 4)) {
+                    command = MUTE;
+                    param = input+4;
+                }
+                else if (strncmp(input, "unmute", 6)) {
+                    command = UNMUTE;
+                    param = input+6;
+                }
+                else if (strncmp(input, "whois", 5)) {
+                    command = WHOIS;
+                    param = input+5;
+                }
 
-	return msg;
-}
+                else {
+                    command = CMD_ERROR;
+                    param = cmd_err;
+                }
+        }
 
-BUFFER *connectCommand (char *params) {
-	char *targetServer = readUntilSpace (params);
-	char *port = readUntilSpace (params);
+        else {
+                command = PRVMSG;
+                param = input;
+        }
 
-	char **paramsArr = (*char)[2];
-	paramsArr[0] = targetServer;
-	paramsArr[1] = port;
+        int size = 2+sizeof(int)+strlen(param); 
 
-	BUFFER *msg = cirarMsg (CONNECT, paramsArr, 2);
+        buffer = (char*)malloc(size);
+        buffer[0] = MSGSTART;
+        memcpy(1+buffer, &command, sizeof(int));
+        memcpy(1+buffer+sizeof(int), param, strlen(param));
+        buffer[size-1] = MSGEND;
 
-	return msg;
-}
+        *b = buffer;
 
-BUFFER *prvmsgCommand (char *input) {
-	BUFFER *msg = cirarMsg (PRVMSG, input, 1);
-	return msg;
-}
-
-
-void parseMesage (char *peer_ip ,char *input) {
-	BUFFER *msgFinal;
-	char sourcePrefix[50];
-	sourcePrefix[] = ":";
-	sourcePrefix ++;
-
-	if (nickname != NULL) {
-		strcpy(sourcePrefix, nickname);
-		sourcePrefix += strlen(nickname);
-	}
-
-	*(sourcePrefix++) = "!";
-	strcpy(sourcePrefix, peer_ip);
-
-	if (input[0] == "/") {
-		// É um comando
-
-		input++;
-
-		if (strncmp(input, "quit", 4)) {
-			// Comando QUIT
-			msgFinal = quitCommand(input+4);
-			
-		}
-
-		if (strncmp(input, "ping", 4)) {
-			// Comando PING
-			msgFinal = pingCommand(input+4);
-			
-		}
-		if (strncmp(input, "connect", 8)) {
-			// Comando CONNECT
-			msgFinal = connectCommand (input+8);
-		}
-	}
-
-	else {
-		msg = prvmsgCommand(input);
-	}
+        return size;
 
 }
 
-void reparseMessage (char *inString) {
-	if (inString[] == ":") {
-		inString++;
-		char *nickname = readUntilC (inString, "!");
-		char *host = readUntilC(inString, " ");
-		int command = *((int *)inString);
+char *recvParse(char *input, char *is_reply) {
+    int code;
+    char *msg;
 
-		char (*params)[14]; 
-		for(int i=0; i<14; i++) {
-			// Consumir espaço (" ")
-			inString++;
-			params[i] = readUntilC(inString, " ");
-			// Consumir ":"
-			inString++;
-			if (inString[] == 13 && *(++inString)==10) {
-				// fim
-				nParams = i+1;
-				break;
-			}
-		}
-	}
-	/*
-	Obtemos:
-		nickname : char *
-		host : char * (ip)
-		command : int
-		params : (char *)[14]
-		nParams : int
-	*/
+    *is_reply = 1;
 
-	MSG *msg = (MSG *) malloc (sizeof(MSG));
-	msg->nickname = nickname;
-	msg->host = host;
-	msg->command = command;
-	msg->params = params;
-	msg->nParams = nParams;
+    if (*input == MSGSTART) {
+        input++;
+        char c = 0;
+        int i = 0;
+        
+        *is_reply = 0;
 
-	return msg;
-}
-
-void handleRecivied (char *msg) {
-	char output[BUFF_SIZE];
-
-	int returnCode = *((int *)msg);
-	switch (returnCode) {
-		case PONG:
-			strcpy(output, "\tSERVIDOR : PONG\0");
-			break;
-		case ERR_BANNEDFROMCHAN:
-			strcpy(output, ERR_BANNEDFROMCHAN_STR);
-			break;
-		case ERR_INVITEONLYCHAN:
-			strcpy(output, ERR_INVITEONLYCHAN_STR);
-			break;
-		case ERR_CHANNELISFULL:
-			strcpy(output, ERR_CHANNELISFULL_STR);
-			break;
-		case ERR_BADCHANNELKEY:
-			strcpy(output, ERR_BADCHANNELKEY_STR);
-			break;
-		case ERR_BADCHANMASK:
-			strcpy(output, ERR_BADCHANMASK_STR);
-			break;
-		case ERR_NOSUCHNICK:
-			strcpy(output, ERR_NOSUCHNICK_STR);
-			break;
-		case ERR_NOSUCHCHANNEL:
-			strcpy(output, ERR_NOSUCHCHANNEL_STR);
-			break;
-		case ERR_TOOMANYCHANNELS:
-			strcpy(output, ERR_TOOMANYCHANNELS_STR);
-			break;
-		case RPL_TOPIC:
-			strcpy(output, RPL_TOPIC_STR);
-			break;
-		case ERR_NOTONCHANNEL:
-			strcpy(output, ERR_NOTONCHANNEL_STR);
-			break;
-		case ERR_USERNOTINCHANNEL:
-			strcpy(output, ERR_USERNOTINCHANNEL_STR);
-			break;
-		case ERR_CHANOPRIVSNEEDED:
-			strcpy(output, ERR_CHANOPRIVSNEEDED_STR);
-			break;
-		case ERR_TOOMANYCHANNELS:
-			strcpy(output, ERR_TOOMANYCHANNELS_STR);
-			break;
-		case ERR_YOUREBANNEDCREEP:
-			strcpy(output, ERR_YOUREBANNEDCREEP_STR);
-			break;
-		case ERR_ALREADYREGISTRED:
-			strcpy(output, ERR_ALREADYREGISTRED_STR);
-			break;
-		case ERR_NOTREGISTERED:
-			strcpy(output, ERR_NOTREGISTERED_STR);
-			break;
-		case ERR_NOSUCHSERVER:
-			strcpy(output, ERR_NOSUCHSERVER_STR);
-			break;
-		case ERR_NOTEXTTOSEND:
-			strcpy(output, ERR_NOTEXTTOSEND_STR);
-			break;
-		case ERR_UNKNOWNCOMMAND:
-			strcpy(output, ERR_UNKNOWNCOMMAND_STR);
-			break;
-		case ERR_NOPRIVILEGES:
-			strcpy(output, ERR_NOPRIVILEGES_STR);
-			break;
-		
-	}
-    else if (msg->command == PONG) {
-		strcpy(output, msg);
+        msg = (char*)malloc(1024);
+        while (input[i] != MSGEND && i<1023) {
+            msg[i] = input[i++];
+        }
+        msg[i] = '\0';
+        return msg;
     }
 
-	return output;
+    memcpy(&code, input, sizeof(int)); 
+
+    switch (code) {
+
+        case PONG:
+            msg = "PONG!";
+            break;
+
+        case ERR_INVITEONLYCHAN:
+            msg = ERR_INVITEONLYCHAN_SRT;
+            break;
+        case ERR_CHANNELISFULL:
+            msg = ERR_CHANNELISFULL_SRT;
+            break;
+        case ERR_NOSUCHNICK:
+            msg = ERR_NOSUCHNICK_SRT;
+            break;
+        case ERR_NOSUCHCHANNEL:
+            msg = ERR_NOSUCHCHANNEL_SRT;
+            break;
+        case ERR_NOTONCHANNEL:
+        case ERR_USERNOTINCHANNEL:
+            msg = ERR_NOTONCHANNEL_SRT;
+            break;
+        case ERR_NOPRIVILEGES:
+            msg = ERR_NOPRIVILEGES_SRT;
+            break;
+
+    }
+    msg = (char*)malloc(100);
+    strcpy(msg, "Server: ");
+    strcpy(msg+8, msg);
+
+    return msg;
 }
+
+

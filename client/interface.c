@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "interface.h"
-#include "msg.h"
+#include "commands.h"
 
 #define MAINSCR 0.8
 
@@ -19,17 +19,14 @@ void interface_init() {
     //leaveok(stdscr, 1);
 }
 
-void writeMsg(char *msg, char *usr, int port, int *y) {
+void writeMsg(char *msg, int *y) {
     int y0, x0, max_y, max_x;
     getyx(stdscr, y0, x0);
     getmaxyx(stdscr, max_y, max_x);
    
-    if (port > 0)
-        mvprintw(*y, 2, "%s:%d - %s", usr, port, msg);
-    else
-        mvprintw(*y, 2, "%s - %s", usr, msg);
+    mvprintw(*y, 2, "%s", msg);
 
-    *y += 1+(int)((6+strlen(usr)+strlen(msg))/(max_x));
+    *y += 1+(int)(strlen(msg)/(max_x));
     move(y0, x0);
 }
 
@@ -56,9 +53,7 @@ void inter_page(int y0, int y, int x0, int x, char full) {
     }
 }
 
-void print_error(int err) {
-    return;
-}
+
 
 void msg_box(BUFFER *buffer, int w, int h, char *msg, int n) {
     int y, x, max_y, max_x;
@@ -97,7 +92,8 @@ int read_input(BUFFER *buffer, int n) {
         switch (c) {
         
 
-            case ERR: break;
+            case ERR: 
+                break;
             case KEY_LEFT:  
                 buffer_mv(buffer, -1);
                 break;
@@ -153,10 +149,8 @@ void print_messages(QUEUE *msg_rcvd, BUFFER *buffer, int *kill) {
 
         while (!queue_empty(msg_rcvd)) {
             msg = queue_pop(msg_rcvd);
-            if (msg[] == MSGSTART) {
-                msgToPrint = handleRecivied(++msg);
-                writeMsg(msgToPrint, "", 0, &msg_pos);
-            }
+            writeMsg(msg, &msg_pos);
+            free(msg);
         }
 
         printBar(y-3, 0, x);
@@ -172,7 +166,7 @@ void print_messages(QUEUE *msg_rcvd, BUFFER *buffer, int *kill) {
         refresh();
         
     }
-    free (pongMsg);
+    //free (pongMsg);
 }
 
 void interface_close(int sockfd) {

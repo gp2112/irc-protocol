@@ -17,6 +17,10 @@
 #define UNMUTE      0b0001101
 #define WHOIS       0b0001110
 #define TEXT        0b0001111
+#define QUIT        0b0010000
+#define CONNECT     0b0010001
+#define PRVMSG      0b0010010
+#define CMD_ERROR   0b0010011
 
 
 
