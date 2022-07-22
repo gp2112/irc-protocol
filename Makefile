@@ -3,7 +3,7 @@ CC = gcc
 SRC = ./src
 DEPS = ./server/channel.c ./server/client.c ./server/controller.c ./server/datetime.c ./server/logger.c ./server/queue.c ./server/server.c ./server/main.c
 
-FLAGS = -g
+FLAGS = -g -Wno-error=format-security
 LIBS = -lpthread
 
 all:
