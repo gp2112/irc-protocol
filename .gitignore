@@ -1,9 +1,8 @@
 # Prerequisites
 *.d
 
-# ignore binary with no extension
-server
-client
+# ignore test files
+*/test.c
 
 # Object files
 *.o
