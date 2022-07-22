@@ -19,5 +19,6 @@ void channel_client_mute(CHANNEL *channel, CLIENT *client);
 void channel_client_unmute(CHANNEL *channel, CLIENT *client);
 char *channel_name(CHANNEL *channel);
 void channel_delete(CHANNEL **ch);
+void channel_transmit_message(CHANNEL *channel, CLIENT *sender, char *text);
 
 #endif

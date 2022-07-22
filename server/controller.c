@@ -123,6 +123,28 @@ int cmd_whois(SERVER *server, CLIENT *client, char *buffer) {
     return -1;
 }
 
+int cmd_privmsg(SERVER *server, CLIENT *client, char *buffer) {
+    logger_debug("%s %s", "Searching channel ", client->current_channel);
+
+    CHANNEL *
+    client_channel = server_find_channel_by_name(server, client->current_channel);
+    
+    
+    if (client_channel == NULL)
+        return ERR_NOTONCHANNEL;
+
+    logger_debug("%s", "Found!");
+
+    logger_info("%s %s %s %s", "#", client->current_channel, " - @", client->host, ": sending message");
+
+    char *text = buffer; int i=0;
+    while (text[i] != MSGEND && i++ < BUFFERSIZE);
+    text[i] = '\0';
+
+    channel_transmit_message(client_channel, client, text);
+    return 0;
+}
+
 
 int control_parse_msg(SERVER *server, CLIENT *client, char *buffer) {
     
@@ -143,6 +165,10 @@ int control_parse_msg(SERVER *server, CLIENT *client, char *buffer) {
     logger_debug("%s %d", "Command value: ", command);
 
     switch (command) {
+
+        case PRIVMSG:
+            logger_debug("%s", "Text Message");
+            return cmd_privmsg(server, client, buffer);
 
         case JOIN:
             logger_debug("%s", "JOIN");

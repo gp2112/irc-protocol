@@ -80,9 +80,14 @@ void channel_transmit_message(CHANNEL *channel, CLIENT *sender, char *text) {
 
 
     while (l != NULL) {
-        if (l->client == sender) continue;
-        
-        queue_insert(l->client->out_queue, buffer);
+        if (l->client != sender) {
+       
+            logger_debug("%s %s", "Sending to ", l->client->host);
+
+            queue_insert(l->client->out_queue, buffer);
+        }
+
+        l = l->next;
 
     }
 
@@ -175,7 +180,7 @@ int channel_exit(CHANNEL *ch, CLIENT *client) {
 }
 
 char *channel_name(CHANNEL *channel) {
-    if (channel != NULL) return NULL;
+    if (channel == NULL) return NULL;
 
     return channel->name;
 }

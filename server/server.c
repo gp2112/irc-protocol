@@ -117,7 +117,8 @@ CLIENT *server_find_client_by_hostname(SERVER *server, char *hostname) {
 CHANNEL *server_find_channel_by_name(SERVER *server, char *name) {
     CHANNEL_LIST *channel_list = server->channels;
     while (channel_list != NULL) {
-        if (strcmp(channel_name(channel_list->channel), name)==0)
+        logger_debug("%s", "Running search channel");
+        if (!strcmp(channel_name(channel_list->channel), name))
             return channel_list->channel;
         channel_list = channel_list->next;
     }
@@ -138,7 +139,7 @@ int server_create_channel(SERVER *server, CLIENT *client, char *name) {
     logger_debug("%s %s", "Creating channel ", name);
 
     CHANNEL *channel = channel_create(client, name, 0, 100);
-    client->current_channel = name;
+    strcpy(client->current_channel, name);
     server->channels = channel_list_append(server->channels, channel);
     
     return 0;
