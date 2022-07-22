@@ -145,14 +145,18 @@ void inter_getIpPort(BUFFER *buffer, char *ip, int *port) {
 
 void print_messages(QUEUE *msg_rcvd, BUFFER *buffer, int *kill) {
     int x, y, msg_pos=2;
-    MSG *msg;
+    char *msg;
+    char msgToPrint[BUFF_SIZE];
 
     while(!(*kill)) {
         getmaxyx(stdscr, y, x);
 
         while (!queue_empty(msg_rcvd)) {
             msg = queue_pop(msg_rcvd);
-            writeMsg(msg->content, msg->peer_ip, msg->peer_port, &msg_pos);
+            if (msg[] == MSGSTART) {
+                msgToPrint = handleRecivied(++msg);
+                writeMsg(msgToPrint, "", 0, &msg_pos);
+            }
         }
 
         printBar(y-3, 0, x);
@@ -168,6 +172,7 @@ void print_messages(QUEUE *msg_rcvd, BUFFER *buffer, int *kill) {
         refresh();
         
     }
+    free (pongMsg);
 }
 
 void interface_close(int sockfd) {

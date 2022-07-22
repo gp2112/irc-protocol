@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include "irc.h"
 #include "interface.h"
+#include "controller.h"
 
 
 
@@ -48,7 +49,10 @@ void *listenMsgs(void *args) {
         if (strcmp(buffer, "received!")==0)
             continue;
         getpeername(new_fd, (struct sockaddr *)&address, &len);
-        msg = msg_create(buffer, inet_ntoa(address.sin_addr), ntohs(address.sin_port)); 
+
+        msg = reparseMessage(buffer);
+        // msg = msg_create(buffer, inet_ntoa(address.sin_addr), ntohs(address.sin_port)); 
+
         queue_insert(msg_rcvd, msg);
 
         //writeMsg(buffer, "127.0.0.1:9340", &msg_pos);
@@ -69,6 +73,7 @@ void *sendMsg(void *args) {
     QUEUE *msg_rcvd = largs->msg_rcvd;
     
     BUFFER *buffer = largs->buffer;
+    BUFFER *msgStr;
 
     int *mutex = largs->mutex, r;;
 
@@ -79,6 +84,7 @@ void *sendMsg(void *args) {
         if (*largs->kill)
             return NULL;
         msg = msg_create(buffer_content(buffer), "Me", 0);
+        msgStr = parseMsg( inet_ntoa(address.sin_addr), buffer_content(buffer));
         queue_insert(msg_rcvd, msg);
 
         r = send(new_fd, buffer_content(buffer), buffer_len(buffer), 0);
