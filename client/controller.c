@@ -45,37 +45,37 @@ int parseMesage (char **b, char *input) {
 
                 input++;
 
-                if (strncmp(input, "quit", 4)) {
+                if (!strncmp(input, "quit", 4)) {
                     command = QUIT;
                 }
-                else if (strncmp(input, "ping", 4)) {
+                else if (!strncmp(input, "ping", 4)) {
                     command = PING;
                 }
-                else if (strncmp(input, "connect", 8)) {
+                else if (!strncmp(input, "connect", 8)) {
                     command = CONNECT;
                     param = input+7;
                 }
-                else if (strncmp(input, "join", 4)) {
+                else if (!strncmp(input, "join", 4)) {
                     command = JOIN;
                     param = input+5;
                 }
-                else if (strncmp(input, "nickname", 8)) {
+                else if (!strncmp(input, "nickname", 8)) {
                     command = NICKNAME;
                     param = input+8;
                 }
-                else if (strncmp(input, "kick", 4)) {
+                else if (!strncmp(input, "kick", 4)) {
                     command = KICK;
                     param = input+4;
                 }
-                else if (strncmp(input, "mute", 4)) {
+                else if (!strncmp(input, "mute", 4)) {
                     command = MUTE;
                     param = input+4;
                 }
-                else if (strncmp(input, "unmute", 6)) {
+                else if (!strncmp(input, "unmute", 6)) {
                     command = UNMUTE;
                     param = input+6;
                 }
-                else if (strncmp(input, "whois", 5)) {
+                else if (!strncmp(input, "whois", 5)) {
                     command = WHOIS;
                     param = input+5;
                 }
@@ -107,7 +107,7 @@ int parseMesage (char **b, char *input) {
 
 char *recvParse(char *input, char *is_reply) {
     int code;
-    char *msg;
+    char *msg, *finalMsg;
 
     *is_reply = 1;
 
@@ -129,6 +129,9 @@ char *recvParse(char *input, char *is_reply) {
     memcpy(&code, input, sizeof(int)); 
 
     switch (code) {
+
+        case 0:
+            return NULL;
 
         case PONG:
             msg = "PONG!";
@@ -155,11 +158,11 @@ char *recvParse(char *input, char *is_reply) {
             break;
 
     }
-    msg = (char*)malloc(100);
-    strcpy(msg, "Server: ");
-    strcpy(msg+8, msg);
+    finalMsg = (char*)malloc(100);
+    strcpy(finalMsg, "Server: ");
+    strcpy(finalMsg+8, msg);
 
-    return msg;
+    return finalMsg;
 }
 
 

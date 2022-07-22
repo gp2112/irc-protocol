@@ -35,6 +35,7 @@ void buffer_del(BUFFER *b) {
     //b->content[b->length-1] = '\0';
     b->cursor--;
     b->length--;
+    b->content[b->length] = '\0';
 }
 char buffer_ended(BUFFER *b) {
     return b->end;
@@ -59,6 +60,7 @@ void buffer_insert(BUFFER *b, char c) {
     }
     b->content[b->cursor++] = c;
     b->length++;
+    b->content[b->length] = '\0';
 }
 
 void buffer_mv(BUFFER *b, int i) {

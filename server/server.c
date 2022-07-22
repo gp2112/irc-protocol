@@ -206,8 +206,16 @@ void *server_listen_client(void *args) {
         }
         if (size == 0) continue;
 
-        logger_info("%s %d %s, %s", "Message", *buffer,"received from ", client->host);
         
+
+        logger_info("%s %s", "Message received from ", client->host);
+        logger_debug("%s", "Bytes received:");
+        for (int i=0; i<size; i++)
+            printf("%d ", buffer[i]); printf("\n");
+        //logger_debug("%s %d %s %d", "First byte: ", buffer[0], " Second byte: ", buffer[1]);
+        
+        logger_debug("%s", "Entering function for verifying commands");
+
         resp_code = control_parse_msg(server, client, buffer);
         if (resp_code == -1) continue; // does not need response: already replyed
 

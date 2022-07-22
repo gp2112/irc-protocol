@@ -39,6 +39,8 @@ void *listenMsgs(void *args) {
         }
        
         msg = recvParse(buffer, &is_reply);
+        if (msg == NULL)
+            continue;
 
         queue_insert(msg_rcvd, msg);
 

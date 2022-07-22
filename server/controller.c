@@ -125,39 +125,63 @@ int cmd_whois(SERVER *server, CLIENT *client, char *buffer) {
 
 
 int control_parse_msg(SERVER *server, CLIENT *client, char *buffer) {
+    
+    logger_debug("%s", "Ennterer control_parse_msg");
+
+    if (*buffer != MSGSTART) {
+        logger_warning("Invalid message: it doesnt start with MSGSTART!");
+        return ERR_BADFORMAT;
+    }
+   
+    buffer++;
+
+    logger_debug("%s", "control parsing command");
+
     int command; memcpy(&command, buffer, sizeof(int)); 
     buffer+=sizeof(int);
+
+    logger_debug("%s %d", "Command value: ", command);
 
     switch (command) {
 
         case JOIN:
+            logger_debug("%s", "JOIN");
             return cmd_join(server, client, buffer);
 
         case NICKNAME:
+            logger_debug("%s", "NICKNAME");
             return cmd_nickname(server, client, buffer);
     
         case PING:
+            logger_debug("%s", "PING");
             return PONG;
 
         case KICK:
+            logger_debug("%s", "KICK");
             return cmd_kick(server, client, buffer);
 
         case MUTE:
+            logger_debug("%s", "MUTE");
             return cmd_mute(server, client, buffer, 1);
             break;
 
         case UNMUTE:
+            logger_debug("%s", "UNMUTE");
             return cmd_mute(server, client, buffer, 0);
             break;
 
         case WHOIS:
+            logger_debug("%s", "WHOIS");
             return cmd_whois(server, client, buffer);
             break;
 
         default:
+            logger_debug("%s", "unknow cmd");
             return ERR_UNKNOWNCOMMAND; 
 
 
+
     }
+    return 0;
 
 }

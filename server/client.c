@@ -32,6 +32,8 @@ CLIENT *client_create(char *nick, char *hostname, int client_socket,
 
     client->host = (char*)malloc(strlen(hostname)+1);
     strcpy(client->host, hostname);
+    
+    logger_debug("%s %s %s %s", "Creating client ", hostname, " or ", client->host);
 
     client->port = port;
     client->socket = client_socket;

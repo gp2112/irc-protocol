@@ -2,27 +2,27 @@
 #define COMMANDS_H
 
 
-#define MSGSTART 0xff
-#define MSGEND 0xfe
+#define MSGSTART 0x0f
+#define MSGEND 0x0e
 
 #define KEEPALIVE 100
 
 // receive
 
-#define PING        'a' //0b0001000
-#define NICKNAME    0b0001001
-#define JOIN        0b0001010
-#define KICK        0b0001011
-#define MUTE        0b0001100
-#define UNMUTE      0b0001101
-#define WHOIS       0b0001110
-#define TEXT        0b0001111
-
+#define PING        16
+#define NICKNAME    17
+#define JOIN        18
+#define KICK        19
+#define MUTE        20
+#define UNMUTE      21
+#define WHOIS       22
+#define PRIVMSG     23
+#define QUIT        24
 
 
 // response
 
-#define PONG 'b'//~PING
+#define PONG ~PING
 
 
 

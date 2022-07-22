@@ -26,5 +26,6 @@
 #define ERR_NOTEXTTOSEND       412
 #define ERR_UNKNOWNCOMMAND     421
 #define ERR_NOPRIVILEGES       481
+#define ERR_BADFORMAT          488
 
 #endif
