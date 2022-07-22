@@ -107,7 +107,7 @@ int parseMesage (char **b, char *input) {
 
 char *recvParse(char *input, char *is_reply) {
     int code;
-    char *msg, *finalMsg;
+    char msg[130], *finalMsg;
 
     *is_reply = 1;
 
@@ -118,12 +118,12 @@ char *recvParse(char *input, char *is_reply) {
         
         *is_reply = 0;
 
-        msg = (char*)malloc(1024);
+        finalMsg = (char*)malloc(1024);
         while (input[i] != MSGEND && i<1023) {
-            msg[i] = input[i++];
+            finalMsg[i] = input[i++];
         }
-        msg[i] = '\0';
-        return msg;
+        finalMsg[i] = '\0';
+        return finalMsg;
     }
 
     memcpy(&code, input, sizeof(int)); 
@@ -134,27 +134,27 @@ char *recvParse(char *input, char *is_reply) {
             return NULL;
 
         case PONG:
-            msg = "PONG!";
+            strcpy(msg, "PONG!");
             break;
 
         case ERR_INVITEONLYCHAN:
-            msg = ERR_INVITEONLYCHAN_SRT;
+            strcpy(msg, ERR_INVITEONLYCHAN_SRT);
             break;
         case ERR_CHANNELISFULL:
-            msg = ERR_CHANNELISFULL_SRT;
+            strcpy(msg, ERR_CHANNELISFULL_SRT);
             break;
         case ERR_NOSUCHNICK:
-            msg = ERR_NOSUCHNICK_SRT;
+            strcpy(msg, ERR_NOSUCHNICK_SRT);
             break;
         case ERR_NOSUCHCHANNEL:
-            msg = ERR_NOSUCHCHANNEL_SRT;
+            strcpy(msg, ERR_NOSUCHCHANNEL_SRT);
             break;
         case ERR_NOTONCHANNEL:
         case ERR_USERNOTINCHANNEL:
-            msg = ERR_NOTONCHANNEL_SRT;
+            strcpy(msg, ERR_NOTONCHANNEL_SRT);
             break;
         case ERR_NOPRIVILEGES:
-            msg = ERR_NOPRIVILEGES_SRT;
+            strcpy(msg, ERR_NOPRIVILEGES_SRT);
             break;
 
     }
