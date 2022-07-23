@@ -25,7 +25,7 @@ CLIENT *client_create(char *nick, char *hostname, int client_socket,
     CLIENT *client = (CLIENT *)malloc(sizeof(CLIENT));
     client->nick = NULL;
     if (nick != NULL) {
-        client->nick = (char*)malloc(strlen(nick)+1);
+        client->nick = (char*)calloc(strlen(nick)+1, sizeof(char));
         strcpy(client->nick, nick);
     }
 

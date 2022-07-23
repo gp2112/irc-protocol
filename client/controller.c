@@ -97,7 +97,7 @@ int parseMesage (char **b, char *input) {
         buffer[0] = MSGSTART;
         memcpy(1+buffer, &command, sizeof(int));
         memcpy(1+buffer+sizeof(int), param, strlen(param));
-        buffer[size-1] = MSGEND;
+        buffer[size] = MSGEND;
 
         *b = buffer;
 
@@ -107,8 +107,9 @@ int parseMesage (char **b, char *input) {
 
 char *recvParse(char *input, char *is_reply) {
     int code;
-    char msg[130], *finalMsg;
-
+    char msg[130], *finalMsg = (char*)malloc(BUFF_SIZE);
+        
+    FILE *f;
     *is_reply = 1;
 
     if (*input == MSGSTART) {
@@ -117,18 +118,13 @@ char *recvParse(char *input, char *is_reply) {
         int i = 0;
         
         *is_reply = 0;
+    
+        strcpy(finalMsg, input);
 
-        finalMsg = (char*)malloc(1024);
-        while (input[i] != MSGEND && i<1023) {
-            finalMsg[i] = input[i++];
-        }
-        finalMsg[i] = '\0';
-        mvprintw(30, 30, finalMsg);
         return finalMsg;
     }
 
     memcpy(&code, input, sizeof(int)); 
-
     switch (code) {
 
         case 0:
@@ -159,7 +155,6 @@ char *recvParse(char *input, char *is_reply) {
             break;
 
     }
-    finalMsg = (char*)malloc(100);
     strcpy(finalMsg, "Server: ");
     strcpy(finalMsg+8, msg);
 

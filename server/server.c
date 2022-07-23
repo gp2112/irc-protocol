@@ -15,6 +15,7 @@
 #include "errors.h"
 #include "logger.h"
 #include "controller.h"
+#include "commands.h"
 
 
 
@@ -172,7 +173,7 @@ void *server_listen_client(void *args) {
 
     free(sc);
 
-    int resp_code;
+    int resp_code, rcvd;
 
     char buffer[BUFFERSIZE];
     char *tmp;
@@ -191,7 +192,13 @@ void *server_listen_client(void *args) {
         }
         if (size == 0) continue;
 
-        
+        if (size >= 4) {
+            memcpy(&rcvd, buffer, sizeof(int));
+            if (rcvd == RCVD) {
+                logger_debug("%s", "Message received by client!");
+                continue;    
+            }
+        }
 
         logger_info("%s %s", "Message received from ", client->host);
         logger_debug("%s", "Bytes received:");

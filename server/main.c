@@ -10,6 +10,7 @@
 
 char stop_server = 0;
 
+
 void sig_handle_sigint(int sig) {
     logger_debug("%s", "\rSIGINT pressed. Server should be closed now...");
     stop_server = 1;

@@ -75,27 +75,30 @@ void channel_transmit_message(CHANNEL *channel, CLIENT *sender, char *text) {
     if (nick == NULL)
         nick = sender->host;
 
-    const int msgstart = MSGSTART;
-    const int msgend = MSGEND;
-    memcpy(buffer, &msgstart, sizeof(int));
+    const char msgstart = MSGSTART;
+    const char msgend = MSGEND;
+    memcpy(buffer, &msgstart, 1);
+    logger_debug("%s %s", "Nick: ", nick);
 
-    strncpy(buffer+sizeof(int), nick, MAX_CLIENT_NAME);
-    char *next = buffer+sizeof(int) + strlen(nick);
-    strcpy(next, " : "); next += 3;
-    strcpy(next, text);
+    memcpy(buffer+1, nick, MAX_CLIENT_NAME);
 
-    next += strlen(text);
+    char *next = buffer+1 + strlen(nick);
+    memcpy(next, ": ", 2); next += 2;
+    memcpy(next, text, strlen(text)+1);
+      
+    next += strlen(text)+1;
 
-    memcpy(next, &msgend, sizeof(int)); next += sizeof(int);
+    memcpy(next, &msgend, 1);
 
-    
+    logger_debug("%s %s", "Message: ", buffer+1);
     int resp, size;
 
     while (l != NULL) {
         if (l->client != sender) {
             
             logger_debug("%s %s %s %s", "Sending ", text," to ", l->client->host);
-            size = send(l->client->socket, buffer, next-buffer, 0);
+            
+            size = send(l->client->socket, buffer, 5+strlen(nick)+strlen(text)+1, 0);
             if (size == -1) {
                 logger_warning("%s", "Error when sending message");
                 continue;

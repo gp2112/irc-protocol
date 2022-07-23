@@ -143,6 +143,8 @@ void print_messages(QUEUE *msg_rcvd, BUFFER *buffer, int *kill) {
     int x, y, msg_pos=2;
     char *msg;
     char msgToPrint[BUFF_SIZE];
+    
+    FILE *f;
 
     while(!(*kill)) {
         getmaxyx(stdscr, y, x);

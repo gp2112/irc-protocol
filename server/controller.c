@@ -30,6 +30,7 @@ int cmd_join(SERVER *server, CLIENT *client, char *buffer) {
 
 int cmd_nickname(SERVER *server, CLIENT *client, char *buffer) {
     char name[MAX_CLIENT_NAME]; int i=0;
+    buffer++;
     while (buffer[i] != MSGEND && i < MAX_CLIENT_NAME)
         name[i] = buffer[i++];
 
@@ -56,6 +57,7 @@ int cmd_kick(SERVER *server, CLIENT *client, char *buffer) {
         return ERR_NOPRIVILEGES;
 
     char name[MAX_CLIENT_NAME]; int i=0;
+    buffer++;
     while (buffer[i] != MSGEND && i < MAX_CLIENT_NAME)
         name[i] = buffer[i++];
 
@@ -139,6 +141,7 @@ int cmd_privmsg(SERVER *server, CLIENT *client, char *buffer) {
 
     char *text = buffer; int i=0;
     while (text[i] != MSGEND && i++ < BUFFERSIZE);
+    logger_debug("%s", "MSGEND");
     text[i] = '\0';
 
     channel_transmit_message(client_channel, client, text);
@@ -151,7 +154,7 @@ int control_parse_msg(SERVER *server, CLIENT *client, char *buffer) {
     logger_debug("%s", "Ennterer control_parse_msg");
 
     if (*buffer != MSGSTART) {
-        logger_warning("Invalid message: it doesnt start with MSGSTART!");
+        logger_warning("%s", "Invalid message: it doesnt start with MSGSTART!");
         return ERR_BADFORMAT;
     }
    
@@ -166,6 +169,7 @@ int control_parse_msg(SERVER *server, CLIENT *client, char *buffer) {
 
     switch (command) {
 
+        
         case PRIVMSG:
             logger_debug("%s", "Text Message");
             return cmd_privmsg(server, client, buffer);

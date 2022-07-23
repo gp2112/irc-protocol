@@ -24,13 +24,16 @@ void *listenMsgs(void *args) {
     QUEUE *msg_rcvd = largs->msg_rcvd;
     char *buffer;
 
-    const int rcvd = RCVD;
+    const int rcvd = 222;
 
     char *msg, is_reply=0;
     while (1) {
 
         buffer = (char*)malloc(BUFF_SIZE);
+
         rcv_size = recv(new_fd, buffer, BUFF_SIZE, 0);
+       
+
         if (rcv_size==0)
             break;
         if (rcv_size < 0) {
@@ -65,9 +68,9 @@ void *sendMsg(void *args) {
 
     int *mutex = largs->mutex, r;
 
-    char *buff, *input;
+    char *buff, *input, is_reply, *msg;
     int buff_size;
-
+    const int rcvd = RCVD;
     while (1) {
         
         *largs->kill = read_input(buffer, BUFF_SIZE);
@@ -87,8 +90,19 @@ void *sendMsg(void *args) {
         
         strcpy(buff, "Me: ");
         strcpy(buff+4, input);
-
+        
         queue_insert(msg_rcvd, buff);
+
+        /*while (*mutex);
+        *mutex = 1;
+        r = recv(new_fd, buff, BUFF_SIZE, 0);
+        *mutex = 0;
+
+        msg = recvParse(buff, &is_reply);
+        queue_insert(msg_rcvd, msg);
+        if (!is_reply)
+            send(new_fd, &rcvd, sizeof(int), 0);*/
+
 
         buffer_clear(buffer);
     }

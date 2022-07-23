@@ -18,7 +18,7 @@
 #define WHOIS       22
 #define PRIVMSG     23
 #define QUIT        24
-
+#define RCVD        222
 
 // response
 
