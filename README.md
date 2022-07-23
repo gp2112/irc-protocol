@@ -8,6 +8,10 @@ Group Members
 - [Adrio Oliveira Alves](https://github.com/adriooa) - 11796830
 - [Eduardo Vinicius Barbosa Rossi](https://github.com/RossiEduardo) - 10716887
 
+## Link para o vídeo explicando
+
+[Drive com o video](https://drive.google.com/drive/folders/1GHanNQ2O9-Rks-Ev_xlsFZN0gDB1Kz9C?usp=sharing)
+
 ## Compatibility
 
 This program was compiled with GCC 12.1.0 in Linux Kernel 5.18.
