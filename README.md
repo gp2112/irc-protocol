@@ -15,18 +15,19 @@ This program was compiled with GCC 12.1.0 in Linux Kernel 5.18.
 ## Building
 
 ```sh
-make
+make serv
+make cli
 ```
 (so hard, yey)
 
 ## Runing a server
 
 ```
-./server IP PORT
+./server2 IP PORT
 ```
 ## Running a client
 ```
-./client
+./clirc
 ```
 
 #### Sending and Receiving Messages
